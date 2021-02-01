@@ -7,13 +7,16 @@ local scale = 10
 local height = math.sqrt(3)/2*scale
 local numV = math.floor(love.graphics.getHeight()/height)
 local numH = math.floor(love.graphics.getWidth()/scale) - 1
-local off = 0
 
 function love.load()
 	love.math.setRandomSeed(1)
 	Object = require "Libraries/classic/classic"
 	require "Libraries/collisions"
 	require "valueTriangle"
+	require "terrainChunk"
+
+	local terrainChunk = TerrainChunk(scale, height)
+
 	for i = 1, numV do
 		terrain[i] = {}
 		for j = 1, numH do
@@ -29,6 +32,7 @@ function love.load()
 			elseif (terrain[i][j] > 1 ) then
 				terrain[i][j] = 1
 			end
+			terrainChunk:newPoint(terrain[i][j], j*scale, i*height)
 		end	
 	end
 
@@ -36,43 +40,44 @@ function love.load()
 		terrain[math.floor(numV/2)][j] = 1
 	end
 	findEdge(1, 1, numH-1, numV-1)
-	love.graphics.setBackgroundColor(0.1058823529, 0.1137254902, 0.1176470588)
+	-- love.graphics.setBackgroundColor(0.1058823529, 0.1137254902, 0.1176470588)
 end
 
-function love.update(delta)
-	fps = love.timer.getFPS()
+function love.mousemoved(x, y, dx, dy)
 	if(love.mouse.isDown(1)) then
-		local x = love.mouse.getX()+scale/2
-		local y = love.mouse.getY()+scale/2
 		local j, i = math.floor(x/love.graphics.getWidth()*numH), math.floor(y/love.graphics.getHeight()*numV)
 		if (j > 0 and j < numH and i > 0 and i < numV and not (terrain[i][j] == 1)) then
 			terrain[i][j] = 1
 			local radius = 2
-			findEdge(j-radius, i-radius, j+radius, i+radius)
+			edges = {}
+			findEdge(1, 1, numH-1, numV-1)
 		end
 	end
 
 	if(love.mouse.isDown(2)) then
-		local x = love.mouse.getX()
-		local y = love.mouse.getY()
 		local j, i = math.floor(x/love.graphics.getWidth()*numH), math.floor(y/love.graphics.getHeight()*numV)
 		if (j > 0 and j < numH and i > 0 and i < numV and not (terrain[i][j] == 0)) then
 			terrain[i][j] = 0
 			local radius = 2
-			findEdge(j-radius, i-radius, j+radius, i+radius)
+			edges = {}
+			findEdge(1, 1, numH-1, numV-1)
 		end
 	end
 end
 
+function love.update(delta)
+	fps = love.timer.getFPS()
+end
+
 function love.draw()
-	love.graphics.setPointSize(2)
-	for i, row in ipairs(terrain) do
-		for j, v in ipairs(row) do
-			love.graphics.setColor(v+0.1, v+0.1, v+0.1)
-			local x, y = (j + i%2/2)*scale, i*height
-			love.graphics.points(x, y)
-		end
-	end
+	-- love.graphics.setPointSize(2)
+	-- for i, row in ipairs(terrain) do
+	-- 	for j, v in ipairs(row) do
+	-- 		love.graphics.setColor(v+0.1, v+0.1, v+0.1)
+	-- 		local x, y = (j + i%2/2)*scale, i*height
+	-- 		love.graphics.points(x, y)
+	-- 	end
+	-- end
 	spitEdge()
 	love.graphics.setColor(0.0, 1.0, 0.1)
 	love.graphics.print(fps, 0, 0)
@@ -81,7 +86,6 @@ end
 function spitEdge()
 	for i,v in ipairs(edges) do
 		love.graphics.setColor(i/#edges, 0, 1-i/#edges, 1)
-		-- rgb
 		love.graphics.line(v[1], v[2], v[3], v[4])
 	end
 end
@@ -90,26 +94,30 @@ function findEdge(minX, minY, maxX, maxY)
 	for i = minY, maxY, 1 do
 		for j = minX+1-i%2, maxX, 1 do
 			local x, y = (j + i%2/2)*scale, i*height
-			local x1, y1, x2, y2, x3, y3 = isoUp(terrain[i][j], terrain[i+1][j+i%2-1], terrain[i+1][j+i%2], x, y)
-			if not (x1 + y1 + x2 + y2 == 1/0)	then
-				table.insert(edges, {x1, y1, x2, y2})
-			end
-			if not (x2 + y2 + x3 + y3 == 1/0)	then
-				table.insert(edges, {x2, y2, x3 ,y3})
-			end
-			if not (x1 + y1 + x3 + y3 == 1/0)	then
-				table.insert(edges, {x1, y1, x3, y3})
+			if(terrain[i][j] + terrain[i+1][j+i%2-1] + terrain[i+1][j+i%2] > 0) then
+				local x1, y1, x2, y2, x3, y3 = isoUp(terrain[i][j], terrain[i+1][j+i%2-1], terrain[i+1][j+i%2], x, y)
+				if not (x1 + y1 + x2 + y2 == 1/0) then
+					table.insert(edges, {x1, y1, x2, y2})
+				end
+				if not (x2 + y2 + x3 + y3 == 1/0) then
+					table.insert(edges, {x2, y2, x3 ,y3})
+				end
+				if not (x1 + y1 + x3 + y3 == 1/0) then
+					table.insert(edges, {x1, y1, x3, y3})
+				end
 			end
 
-			local x1, y1, x2, y2, x3, y3 = isoDown(terrain[i][j], terrain[i][j+1], terrain[i+1][j+i%2], x, y)
-			if not (x1 + y1 + x2 + y2 == 1/0)	then
-				table.insert(edges, {x1, y1, x2, y2})
-			end
-			if not (x2 + y2 + x3 + y3 == 1/0)	then
-				table.insert(edges, {x2, y2, x3 ,y3})
-			end
-			if not (x1 + y1 + x3 + y3 == 1/0)	then
-				table.insert(edges, {x1, y1, x3, y3})
+			if(terrain[i][j] + terrain[i][j+1] + terrain[i+1][j+i%2] > 0) then
+				local x1, y1, x2, y2, x3, y3 = isoDown(terrain[i][j], terrain[i][j+1], terrain[i+1][j+i%2], x, y)
+				if not (x1 + y1 + x2 + y2 == 1/0) then
+					table.insert(edges, {x1, y1, x2, y2})
+				end
+				if not (x2 + y2 + x3 + y3 == 1/0) then
+					table.insert(edges, {x2, y2, x3 ,y3})
+				end
+				if not (x1 + y1 + x3 + y3 == 1/0) then
+					table.insert(edges, {x1, y1, x3, y3})
+				end
 			end
 		end
 	end
@@ -133,4 +141,4 @@ function isoDown(topLeft, topRight, bottom, x, y)
 
 	return valueTriangle:intraprolated()
 end
---https://discord.com/channels/270613445177638922/680928395399266314/805692014367735828
+

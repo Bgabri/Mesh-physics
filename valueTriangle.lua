@@ -1,6 +1,5 @@
 ValueTriangle = Object:extend()
 
-local valueVertices = {}
 function ValueTriangle:new()
 	self.valueVertices = {}
 end
@@ -12,6 +11,14 @@ function ValueTriangle:addVertex(value, x, y)
 		y = y
 	}
 	table.insert(self.valueVertices, valueVertex)
+end
+
+function ValueTriangle:replaceVertex(pos, value, x, y)
+	self.valueVertices[pos] = {
+		value = value,
+		x = x,
+		y = y
+	}
 end
 
 function ValueTriangle:intraprolated()
