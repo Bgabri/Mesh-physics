@@ -9,6 +9,6 @@
   1. Download Löve2D from [love2d.org](https://love2d.org)
   2. Rename love.app to Mesh-Physics.app
 #### Mac
-  3. compress the files and rename the zip to Mesh-Physics.love
-  4. save the .love to ~/Mesh-Physics.app/Contents/Resources/
-  5. change ~/Mesh-Physics.app/Contents/Info.plist with Info.plist from the folder
+  3. move macOSInfo.plist to ~/Mesh-Physics.app/Contents and rename it to Info.plist
+  4. compress the files and rename the zip to Mesh-Physics.love
+  5. save the .love to ~/Mesh-Physics.app/Contents/Resources/
