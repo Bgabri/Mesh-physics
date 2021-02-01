@@ -3,15 +3,17 @@
 local fps = 0
 local terrain = {}
 local edges = {}
-local scale = 1
+local scale = 10
 local height = math.sqrt(3)/2*scale
 local numV = math.floor(love.graphics.getHeight()/height)
 local numH = math.floor(love.graphics.getWidth()/scale) - 1
 local off = 0
+
 function love.load()
 	love.math.setRandomSeed(1)
-	require('Libraries/collisions')
-	test = 0
+	Object = require "Libraries/classic/classic"
+	require "Libraries/collisions"
+	require "valueTriangle"
 	for i = 1, numV do
 		terrain[i] = {}
 		for j = 1, numH do
@@ -19,7 +21,7 @@ function love.load()
 			-- terrain[i][j] = math.floor(love.math.random()*2*2)/3
 			-- print(terrain[i][j])
 			-- terrain[i][j] = math.ceil(1-(love.math.noise((j/numH))+love.math.noise((love.math.noise(i/numV)))))
-			terrain[i][j] = (1.1-(love.math.noise(((j+i%2/2)/numH)+test)+love.math.noise((love.math.noise((i)/numV)))))*10
+			terrain[i][j] = (1.1-(love.math.noise(((j+i%2/2)/numH))+love.math.noise((love.math.noise((i)/numV)))))*10
 			-- terrain[i][j] = (1-(math.ceil((love.math.noise((j/numH))+love.math.noise((love.math.noise(i/numV)))-1)*5)/3))
 
 			if (terrain[i][j] < 0 ) then
@@ -34,6 +36,7 @@ function love.load()
 		terrain[math.floor(numV/2)][j] = 1
 	end
 	findEdge(1, 1, numH-1, numV-1)
+	love.graphics.setBackgroundColor(0.1058823529, 0.1137254902, 0.1176470588)
 end
 
 function love.update(delta)
@@ -62,6 +65,14 @@ function love.update(delta)
 end
 
 function love.draw()
+	love.graphics.setPointSize(2)
+	for i, row in ipairs(terrain) do
+		for j, v in ipairs(row) do
+			love.graphics.setColor(v+0.1, v+0.1, v+0.1)
+			local x, y = (j + i%2/2)*scale, i*height
+			love.graphics.points(x, y)
+		end
+	end
 	spitEdge()
 	love.graphics.setColor(0.0, 1.0, 0.1)
 	love.graphics.print(fps, 0, 0)
@@ -105,66 +116,21 @@ function findEdge(minX, minY, maxX, maxY)
 end
 
 function isoUp(top, bottomLeft, bottomRight, x, y)
+	local valueTriangle = ValueTriangle()
 	local shiftX = 0.5*scale
-	local valueVertex1 = {
-		value = top,
-		x = x, y = y
-	}
-	local valueVertex2 = {
-		value = bottomLeft,
-		x = x - shiftX,
-		y = y + height
-	}
-	local valueVertex3 = {
-		value = bottomRight,
-		x = x + shiftX,
-		y = y + height
-	}
+	valueTriangle:addVertex(top, x, y)
+	valueTriangle:addVertex(bottomLeft, x - shiftX, y + height)
+	valueTriangle:addVertex(bottomRight, x + shiftX, y + height)
 
-	return isoIntraprolation(valueVertex1, valueVertex2, valueVertex3)
+	return valueTriangle:intraprolated()
 end
 
 function isoDown(topLeft, topRight, bottom, x, y)
-	local valueVertex1 = {
-		value = topLeft,
-		x = x, y = y
-	}
-	local valueVertex2 = {
-		value = topRight,
-		x = x + scale, y = y
-	}
-	local valueVertex3 = {
-		value = bottom,
-		x = x + scale*0.5,
-		y = y + height
-	}
+	local valueTriangle = ValueTriangle()
+	valueTriangle:addVertex(topLeft, x, y)
+	valueTriangle:addVertex(topRight, x + scale, y)
+	valueTriangle:addVertex(bottom, x + scale*0.5, y + height)
 
-	return isoIntraprolation(valueVertex1, valueVertex2, valueVertex3)
+	return valueTriangle:intraprolated()
 end
-
-
-function isoIntraprolation(valueVertex1, valueVertex2, valueVertex3)
-	local middle = 0.5
-	local intraValue = (middle - valueVertex1.value)/(valueVertex2.value - valueVertex1.value)
-	local intraX1 = valueVertex1.x + (valueVertex2.x - valueVertex1.x)*intraValue
-	local intraY1 = valueVertex1.y + (valueVertex2.y - valueVertex1.y)*intraValue
-
-	local intraValue = (middle - valueVertex2.value)/(valueVertex3.value - valueVertex2.value)
-	local intraX2 = valueVertex2.x + (valueVertex3.x - valueVertex2.x)*intraValue
-	local intraY2 = valueVertex2.y + (valueVertex3.y - valueVertex2.y)*intraValue
-
-	local intraValue = (middle - valueVertex1.value)/(valueVertex3.value - valueVertex1.value)
-	local intraX3 = valueVertex1.x + (valueVertex3.x - valueVertex1.x)*intraValue
-	local intraY3 = valueVertex1.y + (valueVertex3.y - valueVertex1.y)*intraValue
-
-	if not triangleVsCircle(valueVertex1.x, valueVertex1.y, valueVertex2.x, valueVertex2.y, valueVertex3.x, valueVertex3.y, intraX1, intraY1, 0.00000001) then
-		intraX1, intraY1 = 1/0, 1/0
-	end
-	if not triangleVsCircle(valueVertex1.x, valueVertex1.y, valueVertex2.x, valueVertex2.y, valueVertex3.x, valueVertex3.y, intraX2, intraY2, 0.00000001) then
-		intraX2, intraY2 = 1/0, 1/0
-	end
-	if not triangleVsCircle(valueVertex1.x, valueVertex1.y, valueVertex2.x, valueVertex2.y, valueVertex3.x, valueVertex3.y, intraX3, intraY3, 0.00000001) then
-		intraX3, intraY3 = 1/0, 1/0
-	end
-	return intraX1, intraY1, intraX2, intraY2, intraX3, intraY3
-end
+--https://discord.com/channels/270613445177638922/680928395399266314/805692014367735828
