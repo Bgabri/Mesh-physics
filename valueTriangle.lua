@@ -18,14 +18,6 @@ function ValueTriangle:addVertex(value, x, y)
 	table.insert(self.valueVertices, valueVertex)
 end
 
-function ValueTriangle:replaceVertex(pos, value, x, y)
-	self.valueVertices[pos] = {
-		value = value,
-		x = x,
-		y = y
-	}
-end
-
 function ValueTriangle:intraprolated()
 	x1, y1, x2, y2, x3, y3 = isoIntraprolation(self.valueVertices[1], self.valueVertices[2], self.valueVertices[3])
 	if not (x1 + y1 + x2 + y2 == 1/0)	then
@@ -41,13 +33,9 @@ function ValueTriangle:intraprolated()
 end
 
 function ValueTriangle:draw()
-	-- local x = self.intraprolatedEdge[1][1]
-	-- local y = self.intraprolatedEdge[1][1]
-	-- love.graphics.setColor(x, y, 1-x, 1)
 	local width = love.graphics.getWidth()
 	local height = love.graphics.getHeight()
 	for i,v in ipairs(self.intraprolatedEdge) do
-		-- love.graphics.line(self.intraprolatedValue[i], self.intraprolatedValue[i+1], self.intraprolatedValue[i+(i-1)*(i-3)*1.5+2], self.intraprolatedValue[i+(i-1)*(i-3)*1.5+3])
 		local x, y = v[1], v[2]
 		love.graphics.setColor(x/width, y/height, 1-x/width, 1)
 		love.graphics.line(x, y, v[3], v[4])
