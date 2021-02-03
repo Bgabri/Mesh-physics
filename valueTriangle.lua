@@ -2,6 +2,11 @@ ValueTriangle = Object:extend()
 
 function ValueTriangle:new()
 	self.valueVertices = {}
+	self.intraprolatedEdge = {}
+end
+
+function ValueTriangle:getVertices()
+	return self.valueVertices
 end
 
 function ValueTriangle:addVertex(value, x, y)
@@ -22,7 +27,31 @@ function ValueTriangle:replaceVertex(pos, value, x, y)
 end
 
 function ValueTriangle:intraprolated()
-	return isoIntraprolation(self.valueVertices[1], self.valueVertices[2], self.valueVertices[3])
+	x1, y1, x2, y2, x3, y3 = isoIntraprolation(self.valueVertices[1], self.valueVertices[2], self.valueVertices[3])
+	if not (x1 + y1 + x2 + y2 == 1/0)	then
+		table.insert(self.intraprolatedEdge, {x1, y1, x2, y2})
+	end
+	if not (x2 + y2 + x3 + y3 == 1/0)	then
+		table.insert(self.intraprolatedEdge, {x2, y2, x3 ,y3})
+	end
+	if not (x1 + y1 + x3 + y3 == 1/0)	then
+		table.insert(self.intraprolatedEdge, {x1, y1, x3, y3})
+	end
+	return x1, y1, x2, y2, x3, y3
+end
+
+function ValueTriangle:draw()
+	-- local x = self.intraprolatedEdge[1][1]
+	-- local y = self.intraprolatedEdge[1][1]
+	-- love.graphics.setColor(x, y, 1-x, 1)
+	local width = love.graphics.getWidth()
+	local height = love.graphics.getHeight()
+	for i,v in ipairs(self.intraprolatedEdge) do
+		-- love.graphics.line(self.intraprolatedValue[i], self.intraprolatedValue[i+1], self.intraprolatedValue[i+(i-1)*(i-3)*1.5+2], self.intraprolatedValue[i+(i-1)*(i-3)*1.5+3])
+		local x, y = v[1], v[2]
+		love.graphics.setColor(x/width, y/height, 1-x/width, 1)
+		love.graphics.line(x, y, v[3], v[4])
+	end
 end
 
 function isoIntraprolation(valueVertex1, valueVertex2, valueVertex3)
