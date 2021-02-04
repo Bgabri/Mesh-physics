@@ -2,7 +2,7 @@
 local fps = 0
 local terrain = {}
 local edges = {}
-local scale = 1
+local scale = 5
 local height = math.sqrt(3)/2*scale
 numV = math.floor(love.graphics.getHeight()/height)
 numH = math.floor(love.graphics.getWidth()/scale) - 1
@@ -33,7 +33,6 @@ function love.load()
 			terrainChunk:newPoint(terrain[i][j], i, j)
 		end	
 	end
-	terrainChunk:transform()
 	terrainChunk:findEdge()
 end
 
@@ -41,20 +40,16 @@ function love.mousemoved(x, y, dx, dy)
 	if(love.mouse.isDown(1)) then
 		local j, i = math.floor(x/love.graphics.getWidth()*numH), math.floor(y/love.graphics.getHeight()*numV)
 		if (j > 0 and j < numH and i > 0 and i < numV and not (terrain[i][j] == 1)) then
-			terrain[i][j] = 1
-			local radius = 2
-			edges = {}
-			findEdge(1, 1, numH-1, numV-1)
+			terrainChunk:newPoint(1, i, j)
+			terrainChunk:findEdge()
 		end
 	end
 
 	if(love.mouse.isDown(2)) then
 		local j, i = math.floor(x/love.graphics.getWidth()*numH), math.floor(y/love.graphics.getHeight()*numV)
 		if (j > 0 and j < numH and i > 0 and i < numV and not (terrain[i][j] == 0)) then
-			terrain[i][j] = 0
-			local radius = 2
-			edges = {}
-			findEdge(1, 1, numH-1, numV-1)
+			terrainChunk:newPoint(0, i, j)
+			terrainChunk:findEdge()
 		end
 	end
 end
@@ -68,3 +63,4 @@ function love.draw()
 	love.graphics.setColor(0.0, 1.0, 0.1)
 	love.graphics.print(fps, 0, 0)
 end
+ 
