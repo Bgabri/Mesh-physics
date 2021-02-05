@@ -27,17 +27,18 @@ function TerrainChunk:toTri()
 			for j = 2-i%2, #row-1, 1 do
 				local x, y = (j + i%2/2)*self.scale, i*self.height
 				local value = self.terrainPoints[i][j]
-				local valueTriangle = ValueTriangle()
-				valueTriangle:addVertex(value, x, y)
-				valueTriangle:addVertex(self.terrainPoints[i][j+1], x + self.scale, y)
-				valueTriangle:addVertex(self.terrainPoints[i+1][j+i%2], x + shiftX, y + self.height)
-				table.insert(self.terrainTriangle[i], j*2, valueTriangle)
 
 				local valueTriangle = ValueTriangle()
-				valueTriangle:addVertex(value, x, y)
-				valueTriangle:addVertex(self.terrainPoints[i+1][j+i%2-1], x - shiftX, y + self.height)
-				valueTriangle:addVertex(self.terrainPoints[i+1][j+i%2], x + shiftX, y + self.height)
-				table.insert(self.terrainTriangle[i], j*2+1, valueTriangle)
+				valueTriangle:addVertex(value, x, y) -- current node
+				valueTriangle:addVertex(self.terrainPoints[i][j+1], x + self.scale, y) -- left node			      --    * ·
+				valueTriangle:addVertex(self.terrainPoints[i+1][j+i%2], x + shiftX, y + self.height) -- bottom node--  • •
+				table.insert(self.terrainTriangle[i], j*2, valueTriangle) -- iso down
+
+				local valueTriangle = ValueTriangle()
+				valueTriangle:addVertex(value, x, y) -- current node
+				valueTriangle:addVertex(self.terrainPoints[i+1][j+i%2-1], x - shiftX, y + self.height) -- b left node
+				valueTriangle:addVertex(self.terrainPoints[i+1][j+i%2], x + shiftX, y + self.height) -- b right node
+				table.insert(self.terrainTriangle[i], j*2+1, valueTriangle) -- iso up
 			end
 		end
 	end
@@ -45,8 +46,7 @@ end
 
 function TerrainChunk:findEdge()
 	self:toTri()
-	for i = 1, #self.terrainTriangle do
-		local row = self.terrainTriangle[i]
+	for i, row in ipairs(self.terrainTriangle) do
 		for j = 1, #row do
 			local value = row[j]
 			if not (value == nil) then
@@ -56,40 +56,73 @@ function TerrainChunk:findEdge()
 	end
 end
 
-function TerrainChunk:isoEdge(i, j, r)
+function TerrainChunk:isoEdge(i, j)
 	local shiftX = 0.5*self.scale
 	local numV = math.floor(love.graphics.getHeight()/self.height)
 	local numH = math.floor(love.graphics.getWidth()/self.scale) - 1
-	for i2 = i-r, i+r do
-		if (i2 > 0 and i2 < numV) then
-			for j2 = j-r, j+r do
-				if (j2 > 0 and j2 < numH) then
-					local x, y = (j2 + i2%2/2)*self.scale, i2*self.height
-					local value = self.terrainPoints[i2][j2]
-					local valueTriangle = ValueTriangle()
 
-					valueTriangle:addVertex(value, x, y)
-					valueTriangle:addVertex(self.terrainPoints[i2][j2+1], x + self.scale, y)
-					valueTriangle:addVertex(self.terrainPoints[i2+1][j2+i2%2], x + shiftX, y + self.height)
-					valueTriangle:intraprolated()
-					self.terrainTriangle[i2][j2*2] = valueTriangle
-
-					local valueTriangle = ValueTriangle()
-					valueTriangle:addVertex(value, x, y)
-					valueTriangle:addVertex(self.terrainPoints[i2+1][j2+i2%2-1], x - shiftX, y + self.height)
-					valueTriangle:addVertex(self.terrainPoints[i2+1][j2+i2%2], x + shiftX, y + self.height)
-					valueTriangle:intraprolated()
-					self.terrainTriangle[i2][j2*2+1] = valueTriangle
-				end
-			end
-		end
+	local x, y = (j + i%2/2)*self.scale, i*self.height
+	local value = self.terrainPoints[i][j]
+	local relativeOctValues = {
+		{
+			value = self.terrainPoints[i-1][j+i%2-1],--  • ·
+			x = x - shiftX,							 -- · · ·
+			y = y - self.height						 --  · ·
+		},{
+			value = self.terrainPoints[i-1][j+i%2],  --  · •
+			x = x + shiftX,							 -- · · ·
+			y = y - self.height						 --  · ·
+		},{
+			value = self.terrainPoints[i][j+1], 	 --  · ·
+			x = x + self.scale,					  	 -- · · •
+			y = y								  	 --  · ·
+		},{
+			value = self.terrainPoints[i+1][j+i%2],	 --  · ·
+			x = x + shiftX,							 -- · · ·
+			y = y + self.height						 --  · •
+		},{
+			value = self.terrainPoints[i+1][j+i%2-1],--  · ·
+			x = x - shiftX,							 -- · · ·
+			y = y + self.height						 --  • ·
+		},{
+			value = self.terrainPoints[i][j-1], 	 --  · ·
+			x = x - self.scale,					  	 -- • · ·
+			y = y								  	 --  · ·
+		}
+	}
+	local relativeOctCords = {
+		{						--  * •
+			i = i-1,			-- · • ·
+			j = (j+i%2-1)*2		--  · ·
+		},{						--  · *
+			i = i-1,			-- · • •
+			j = (j+i%2)*2+1		--  · ·
+		},{						--  · ·
+			i = i,				-- · * •
+			j = j*2				--  · •
+		},{						--  · ·
+			i = i,				-- · * ·
+			j = j*2+1			--  • •
+		},{						--  · ·
+			i = i,				-- * • ·
+			j = (j-1)*2			--  • ·
+		},{						--  * ·
+			i = i-1,			-- • • ·
+			j = (j+i%2-1)*2+1	--  · ·
+		}
+	}
+	for k = 0, 5 do
+		local valueTriangle = ValueTriangle()
+		valueTriangle:addVertex(value, x, y)
+		valueTriangle:addVertex(relativeOctValues[k%6+1].value, relativeOctValues[k%6+1].x, relativeOctValues[k%6+1].y)
+		valueTriangle:addVertex(relativeOctValues[(k+1)%6+1].value, relativeOctValues[(k+1)%6+1].x, relativeOctValues[(k+1)%6+1].y)
+		valueTriangle:intraprolated()
+		self.terrainTriangle[relativeOctCords[k+1].i][relativeOctCords[k+1].j] = valueTriangle
 	end
-	self.terrainTriangle[10][10*2]:intraprolated()
 end
 
 function TerrainChunk:draw()
-	for i = 1, #self.terrainTriangle do
-		local row = self.terrainTriangle[i]
+	for i, row in ipairs(self.terrainTriangle) do
 		for j = 1, #row do
 			local value = row[j]
 			if not (value == nil) then
