@@ -30,8 +30,8 @@ function TerrainChunk:toTri()
 
 				local valueTriangle = ValueTriangle()
 				valueTriangle:addVertex(value, x, y) -- current node
-				valueTriangle:addVertex(self.terrainPoints[i][j+1], x + self.scale, y) -- left node			      --    * ·
-				valueTriangle:addVertex(self.terrainPoints[i+1][j+i%2], x + shiftX, y + self.height) -- bottom node--  • •
+				valueTriangle:addVertex(self.terrainPoints[i][j+1], x + self.scale, y) -- left node
+				valueTriangle:addVertex(self.terrainPoints[i+1][j+i%2], x + shiftX, y + self.height) -- bottom node
 				table.insert(self.terrainTriangle[i], j*2, valueTriangle) -- iso down
 
 				local valueTriangle = ValueTriangle()
@@ -128,6 +128,16 @@ function TerrainChunk:draw()
 			if not (value == nil) then
 				value:draw()
 			end
+		end
+	end
+end
+
+function TerrainChunk:drawPoints()
+	for i, row in ipairs(self.terrainPoints) do
+		for j,v in ipairs(row) do
+			local x, y = (j + i%2/2)*self.scale, i*self.height
+			love.graphics.setColor(v,v,v)
+			love.graphics.points(x, y)
 		end
 	end
 end
