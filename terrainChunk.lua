@@ -122,11 +122,13 @@ function TerrainChunk:isoEdge(i, j)
 end
 
 function TerrainChunk:draw()
+	local width = love.graphics.getWidth()
+	local height = love.graphics.getHeight()
 	for i, row in ipairs(self.terrainTriangle) do
 		for j = 1, #row do
 			local value = row[j]
 			if not (value == nil) then
-				value:draw()
+				value:draw(width, height)
 			end
 		end
 	end

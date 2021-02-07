@@ -1,5 +1,5 @@
 local fps = 0
-local scale = 6
+local scale = 4
 local height = math.sqrt(3)/2*scale
 local numV = math.floor(love.graphics.getHeight()/height)
 local numH = math.floor(love.graphics.getWidth()/scale) - 1
@@ -8,11 +8,12 @@ local value = 1
 local normalValue = 1
 
 function love.load()
-	love.math.setRandomSeed(9124) -- change seed for different terrain gen
+	love.math.setRandomSeed(496) -- change seed for different terrain gen
 	Object = require "Libraries/classic/classic"
 	require "Libraries/collisions"
 	require "valueTriangle"
 	require "terrainChunk"
+	-- require "waterAutomaton"
 	terrainChunk = TerrainChunk(scale)
 	local time = love.timer.getTime()
 	local xShift = love.math.random()*100000
@@ -28,12 +29,30 @@ function love.load()
 			terrainChunk:newPoint(value, i, j)
 		end	
 	end
+	for i=10, 50, 2 do
+		terrainChunk:newPoint(1, i, 10)
+		terrainChunk:newPoint(0.500001, i+1, 10)
+		terrainChunk:newPoint(0.500001, i+1, 9)
+	end
 
 	local time2 = love.timer.getTime()
 	print(time2-time)
 	terrainChunk:findEdge()
 	local time3 = love.timer.getTime()
 	print(time3-time2)
+end
+
+function love.update(delta)
+	fps = love.timer.getFPS()
+end
+
+function love.draw()
+	-- terrainChunk:drawPoints()
+	terrainChunk:draw()
+	love.graphics.circle("line", love.mouse.getX(), love.mouse.getY(), normalValue*scale/2)
+	love.graphics.setColor(0.0, 1.0, 0.1)
+	love.graphics.print(fps, 0, 0)
+	love.graphics.print("value: " .. normalValue, 0, 20)
 end
 
 function love.mousemoved(x, y, dx, dy)
@@ -57,17 +76,4 @@ end
 function love.wheelmoved(dx, dy)
 	value = value + dy
 	normalValue = math.min(math.ceil(math.abs(value/50)*100)/100, 1)
-end
-
-function love.update(delta)
-	fps = love.timer.getFPS()
-end
-
-function love.draw()
-	-- terrainChunk:drawPoints()
-	terrainChunk:draw()
-	love.graphics.circle("line", love.mouse.getX(), love.mouse.getY(), normalValue*scale/2)
-	love.graphics.setColor(0.0, 1.0, 0.1)
-	love.graphics.print(fps, 0, 0)
-	love.graphics.print("value: " .. normalValue, 0, 20)
 end

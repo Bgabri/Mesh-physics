@@ -51,7 +51,7 @@ function isoIntraprolation(valueVertex1, valueVertex2, valueVertex3)
 	end
 	if not triangleVsCircle(valueVertex1.x, valueVertex1.y, valueVertex2.x, valueVertex2.y, valueVertex3.x, valueVertex3.y, intraX3, intraY3, 0.00000001) then
 		intraX3, intraY3 = 1/0, 1/0
-	end -- check isn't efficient
+	end -- check isn't efficient/ can be avoided?? 
 	return intraX1, intraY1, intraX2, intraY2, intraX3, intraY3
 end
 
@@ -62,9 +62,7 @@ function linearIntraprolation(valueVertex1, valueVertex2, value)
 	return intraprolatedX, intraprolatedY
 end
 
-function ValueTriangle:draw()
-	local width = love.graphics.getWidth()
-	local height = love.graphics.getHeight()
+function ValueTriangle:draw(width, height)
 	for i,v in ipairs(self.intraprolatedEdge) do
 		local x, y = v[1], v[2]
 		love.graphics.setColor(x/width, y/height, 1-x/width, 1)
