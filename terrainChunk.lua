@@ -18,40 +18,28 @@ function TerrainChunk:newPoint(value, i, j)
 	end
 end
 
-function TerrainChunk:toTri()
+function TerrainChunk:findEdge()
 	local shiftX = 0.5*self.scale
-	for i = 1, #self.terrainPoints-1, 1 do
+	for i = 1, #self.terrainPoints-1 do
 		self.terrainTriangle[i] = {}
 		local row = self.terrainPoints[i]
-		if not (row == nil) then
-			for j = 2-i%2, #row-1, 1 do
-				local x, y = (j + i%2/2)*self.scale, i*self.height
-				local value = self.terrainPoints[i][j]
+		for j = 2-i%2, #row-1 do
+			local x, y = (j + i%2/2)*self.scale, i*self.height
+			local value = self.terrainPoints[i][j]
 
-				local valueTriangle = ValueTriangle()
-				valueTriangle:addVertex(value, x, y) -- current node
-				valueTriangle:addVertex(self.terrainPoints[i][j+1], x + self.scale, y) -- left node
-				valueTriangle:addVertex(self.terrainPoints[i+1][j+i%2], x + shiftX, y + self.height) -- bottom node
-				table.insert(self.terrainTriangle[i], j*2, valueTriangle) -- iso down
+			local valueTriangle = ValueTriangle()
+			valueTriangle:addVertex(value, x, y) -- current node
+			valueTriangle:addVertex(self.terrainPoints[i][j+1], x + self.scale, y) -- left node
+			valueTriangle:addVertex(self.terrainPoints[i+1][j+i%2], x + shiftX, y + self.height) -- bottom node
+			valueTriangle:intraprolated()
+			table.insert(self.terrainTriangle[i], j*2, valueTriangle) -- iso down
 
-				local valueTriangle = ValueTriangle()
-				valueTriangle:addVertex(value, x, y) -- current node
-				valueTriangle:addVertex(self.terrainPoints[i+1][j+i%2-1], x - shiftX, y + self.height) -- b left node
-				valueTriangle:addVertex(self.terrainPoints[i+1][j+i%2], x + shiftX, y + self.height) -- b right node
-				table.insert(self.terrainTriangle[i], j*2+1, valueTriangle) -- iso up
-			end
-		end
-	end
-end
-
-function TerrainChunk:findEdge()
-	self:toTri()
-	for i, row in ipairs(self.terrainTriangle) do
-		for j = 1, #row do
-			local value = row[j]
-			if not (value == nil) then
-				value:intraprolated()
-			end
+			local valueTriangle = ValueTriangle()
+			valueTriangle:addVertex(value, x, y) -- current node
+			valueTriangle:addVertex(self.terrainPoints[i+1][j+i%2-1], x - shiftX, y + self.height) -- b left node
+			valueTriangle:addVertex(self.terrainPoints[i+1][j+i%2], x + shiftX, y + self.height) -- b right node
+			valueTriangle:intraprolated()
+			table.insert(self.terrainTriangle[i], j*2+1, valueTriangle) -- iso up
 		end
 	end
 end

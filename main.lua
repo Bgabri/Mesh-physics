@@ -1,54 +1,60 @@
 local fps = 0
-local scale = 4
+local scale = 5
 local height = math.sqrt(3)/2*scale
 local numV = math.floor(love.graphics.getHeight()/height)
 local numH = math.floor(love.graphics.getWidth()/scale) - 1
 local terrainChunk
 local value = 1
 local normalValue = 1
+local water
 
 function love.load()
-	love.math.setRandomSeed(496) -- change seed for different terrain gen
+	print(numV*numH) -- 45k
+	love.math.setRandomSeed(6) -- change seed for different terrain gen
 	Object = require "Libraries/classic/classic"
 	require "Libraries/collisions"
 	require "valueTriangle"
 	require "terrainChunk"
-	-- require "waterAutomaton"
+	require "fluidAutomata"
 	terrainChunk = TerrainChunk(scale)
-	local time = love.timer.getTime()
+	water = FluidAutomata(scale)
 	local xShift = love.math.random()*100000
 	local yShift = love.math.random()*100000
 	for i = 1, numV do
 		for j = 1, numH do
 			local value = (love.math.noise((j+i%2/2 + xShift)/numH, (i+yShift)/numV))
-			if (value < 0.45 ) then
+			if (value < 0.48 ) then
 				value = 0
-			elseif (value > 0.55 ) then
+			elseif (value > 0.53 ) then
 				value = 1
 			end
 			terrainChunk:newPoint(value, i, j)
+			water:newAutomaton(0, i, j)
 		end	
 	end
-	for i=10, 50, 2 do
-		terrainChunk:newPoint(1, i, 10)
-		terrainChunk:newPoint(0.500001, i+1, 10)
-		terrainChunk:newPoint(0.500001, i+1, 9)
-	end
 
+	local time = love.timer.getTime()
+	terrainChunk:findEdge()
 	local time2 = love.timer.getTime()
 	print(time2-time)
-	terrainChunk:findEdge()
-	local time3 = love.timer.getTime()
-	print(time3-time2)
+
+	local i = 2
+	local j = 2
+	local value = 1
+	water:newAutomaton(value, i, j)
+	water:intializeAutomata()
 end
 
 function love.update(delta)
 	fps = love.timer.getFPS()
+	water:update(delta)
 end
 
 function love.draw()
 	-- terrainChunk:drawPoints()
 	terrainChunk:draw()
+	water:draw()
+	water:drawPoints()
 	love.graphics.circle("line", love.mouse.getX(), love.mouse.getY(), normalValue*scale/2)
 	love.graphics.setColor(0.0, 1.0, 0.1)
 	love.graphics.print(fps, 0, 0)
@@ -77,3 +83,5 @@ function love.wheelmoved(dx, dy)
 	value = value + dy
 	normalValue = math.min(math.ceil(math.abs(value/50)*100)/100, 1)
 end
+
+
