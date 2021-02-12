@@ -125,9 +125,13 @@ end
 function TerrainChunk:drawPoints()
 	for i, row in ipairs(self.terrainPoints) do
 		for j,v in ipairs(row) do
-			local x, y = (j + i%2/2)*self.scale, i*self.height
-			love.graphics.setColor(v,v,v)
-			love.graphics.points(x, y)
+			if (v > 0) then
+				local x, y = (j + i%2/2)*self.scale, i*self.height
+				love.graphics.setColor(v, v, v)
+				love.graphics.points(x, y)
+			end
 		end
 	end
 end
+
+

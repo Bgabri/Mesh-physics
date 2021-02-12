@@ -9,8 +9,8 @@ local normalValue = 1
 local water
 
 function love.load()
-	print(numV*numH) -- 45k
-	love.math.setRandomSeed(6) -- change seed for different terrain gen
+	print(numV*numH) -- 45k ~(3.3)
+	love.math.setRandomSeed(500) -- change seed for different terrain gen
 	Object = require "Libraries/classic/classic"
 	require "Libraries/collisions"
 	require "valueTriangle"
@@ -38,24 +38,31 @@ function love.load()
 	local time2 = love.timer.getTime()
 	print(time2-time)
 
-	local i = 2
-	local j = 2
-	local value = 1
-	water:newAutomaton(value, i, j)
+	-- local i = 2
+	-- local j = 2
+	-- local value = 1
+	-- water:newAutomaton(value, i, j)
 	water:intializeAutomata()
 end
-
+local test = 0
 function love.update(delta)
+	test = test + 1
 	fps = love.timer.getFPS()
-	water:update(delta)
+	if(test%4 == 0) then
+		water:update(delta)
+		test = 0
+	end
 end
 
 function love.draw()
 	-- terrainChunk:drawPoints()
-	terrainChunk:draw()
-	water:draw()
+	-- terrainChunk:draw()
 	water:drawPoints()
-	love.graphics.circle("line", love.mouse.getX(), love.mouse.getY(), normalValue*scale/2)
+	water:draw()
+	local x, y = love.mouse.getX(), love.mouse.getY()
+	local windowWidth, windowHeight = love.graphics.getWidth(), love.graphics.getHeight()
+	love.graphics.setColor(x/windowWidth, y/windowHeight, 1-x/windowWidth, 1)
+	love.graphics.circle("line", x, y, normalValue*scale/2)
 	love.graphics.setColor(0.0, 1.0, 0.1)
 	love.graphics.print(fps, 0, 0)
 	love.graphics.print("value: " .. normalValue, 0, 20)
@@ -63,18 +70,18 @@ end
 
 function love.mousemoved(x, y, dx, dy)
 	if(love.mouse.isDown(1)) then
-		local j, i = math.floor(x/love.graphics.getWidth()*numH), math.floor(y/love.graphics.getHeight()*numV)
+		local j, i = math.floor(x/scale), math.floor(y/(height))
 		if (j > 0 and j < numH and i > 0 and i < numV) then
-			terrainChunk:newPoint(normalValue, i, j-i%2+1)
-			terrainChunk:isoEdge(i, j-i%2+1)
+			terrainChunk:newPoint(normalValue, i, j)
+			terrainChunk:isoEdge(i, j)
 		end
 	end
 
 	if(love.mouse.isDown(2)) then
-		local j, i = math.floor(x/love.graphics.getWidth()*numH), math.floor(y/love.graphics.getHeight()*numV)
+		local j, i = math.floor(x/scale), math.floor(y/(height))
 		if (j > 0 and j < numH and i > 0 and i < numV) then
-			terrainChunk:newPoint(0, i, j)
-			terrainChunk:isoEdge(i, j)
+			water:newAutomaton(normalValue, i, j)
+			-- water:isoEdge(i, j)
 		end
 	end
 end
