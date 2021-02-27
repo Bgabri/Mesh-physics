@@ -1,5 +1,5 @@
 function love.conf(t)
-	io.stdout:setvbuf("no")
+    io.stdout:setvbuf("no")
     t.version = "11.3"
     t.console = true
 
@@ -12,9 +12,14 @@ function love.conf(t)
     t.window.y = nil 
     -- t.window.resizable = true
 
+    t.accelerometerjoystick = false
+    t.audio.mixwithsystem = false
     t.modules.joystick = false
     t.modules.physics = false
     t.modules.audio = false
     t.modules.video = false
     t.modules.touch = false
+    t.modules.sound = false
+
+    t.window.icon = "icon.png"
 end

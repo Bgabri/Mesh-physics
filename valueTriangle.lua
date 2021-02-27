@@ -2,7 +2,7 @@ ValueTriangle = Object:extend()
 
 function ValueTriangle:new()
 	self.valueVertices = {}
-	self.intraprolatedEdge = {}
+	self.intraprolatedVertices = {}
 end
 
 function ValueTriangle:addVertex(value, x, y)
@@ -14,10 +14,6 @@ function ValueTriangle:addVertex(value, x, y)
 	table.insert(self.valueVertices, valueVertex)
 end
 
-function ValueTriangle:test(valueVertices)
-	self.valueVertices = valueVertices
-end
-
 function ValueTriangle:empty(valueVertex1, valueVertex2, value)
 	for i,v in ipairs(self.valueVertices) do
 		if not (v.value == 0) then
@@ -27,20 +23,20 @@ function ValueTriangle:empty(valueVertex1, valueVertex2, value)
 	return true
 end
 
-function ValueTriangle:intraprolated()
+function ValueTriangle:intraprolated(middleValue)
 	if (not idklol(self.valueVertices[1], self.valueVertices[2], self.valueVertices[3])) then
-		self.intraprolatedEdge = {}
-		local x1, y1, x2, y2, x3, y3 = isoValueIntraprolation(self.valueVertices[1], self.valueVertices[2], self.valueVertices[3])
-		if not (x1 + y1 + x2 + y2 == 1/0) then
-			table.insert(self.intraprolatedEdge, {x1, y1, x2, y2})
+		local x1, y1, x2, y2, x3, y3 = isoValueIntraprolation(self.valueVertices[1], self.valueVertices[2], self.valueVertices[3], middleValue)
+		if not (x1 + y1 == 1/0) then
+			table.insert(self.intraprolatedVertices, {x1, y1})
 		end
-		if not (x2 + y2 + x3 + y3 == 1/0) then
-			table.insert(self.intraprolatedEdge, {x2, y2, x3 ,y3})
+		if not (x2 + y2 == 1/0) then
+			table.insert(self.intraprolatedVertices, {x2, y2})
 		end
-		if not (x1 + y1 + x3 + y3 == 1/0) then
-			table.insert(self.intraprolatedEdge, {x1, y1, x3, y3})
+		if not (x3 + y3 == 1/0) then
+			table.insert(self.intraprolatedVertices, {x3, y3})
 		end
 	end
+	return self.intraprolatedVertices
 end
 
 function idklol(valueVertex1, valueVertex2, valueVertex3)
@@ -48,8 +44,8 @@ function idklol(valueVertex1, valueVertex2, valueVertex3)
 	return total == 3 or total == 0
 end
 
-function isoValueIntraprolation(valueVertex1, valueVertex2, valueVertex3)
-	local middleValue = 0.5
+function isoValueIntraprolation(valueVertex1, valueVertex2, valueVertex3, middleValue)
+	-- local middleValue = 0.5
 	local intraX1, intraY1 = linearIntraprolation(valueVertex1, valueVertex2, middleValue)
 	local intraX2, intraY2 = linearIntraprolation(valueVertex2, valueVertex3, middleValue)
 	local intraX3, intraY3 = linearIntraprolation(valueVertex1, valueVertex3, middleValue)
@@ -66,17 +62,9 @@ function isoValueIntraprolation(valueVertex1, valueVertex2, valueVertex3)
 	return intraX1, intraY1, intraX2, intraY2, intraX3, intraY3
 end
 
-function linearIntraprolation(valueVertex1, valueVertex2, value)
-	local intraValue = (value - valueVertex1.value)/(valueVertex2.value - valueVertex1.value)
+function linearIntraprolation(valueVertex1, valueVertex2, middleValue)
+	local intraValue = (middleValue - valueVertex1.value)/(valueVertex2.value - valueVertex1.value)
 	local intraprolatedX = valueVertex1.x + (valueVertex2.x - valueVertex1.x)*intraValue
 	local intraprolatedY = valueVertex1.y + (valueVertex2.y - valueVertex1.y)*intraValue
 	return intraprolatedX, intraprolatedY
-end
-
-function ValueTriangle:draw(width, height)
-	for i,v in ipairs(self.intraprolatedEdge) do
-		local x, y = v[1], v[2]
-		love.graphics.setColor(x/width, y/height, 1-x/width)
-		love.graphics.line(x, y, v[3], v[4])
-	end
 end
