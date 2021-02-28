@@ -18,8 +18,8 @@ function FluidAutomata:newAutomaton(value, i, j)
 	self.fluidChunk:newPoint(value, i, j)
 end
 
-function FluidAutomata:intializeAutomata()
-	self.fluidChunk:findEdge()
+function FluidAutomata:intialiseAutomata()
+	self.fluidChunk:initialiseMesh()
 end
 
 function FluidAutomata:update(delta)
@@ -57,12 +57,6 @@ function FluidAutomata:update(delta)
 						i = i							 --  · ·
 					}
 				}
-				-- local jNew = relativeOctValues[1].i + irelativeOctValues[1].j
-				-- local theta = relativeOctValues[1].i*relativeOctValues[1].j+relativeOctValues[2].i*relativeOctValues[2].j
-
-				-- local value1 = relativeOctValues[4]
-				-- local value2 = 
-				-- local value3 = 
 
 				if (relativeOctValues[4].value <= 1 and relativeOctValues[5].value <= 1 and i%2 == 0) then
 					self:updateValue(i, j, -grav)
@@ -103,7 +97,7 @@ function FluidAutomata:updateValue(i, j, value)
 end
 
 function FluidAutomata:draw()
-	self.fluidChunk:draw()
+	self.fluidChunk:drawMesh()
 end
 
 function FluidAutomata:drawPoints()

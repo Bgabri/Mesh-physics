@@ -1,18 +1,19 @@
 local fps = 0
-local scale = 1
+local scale = 3
 local height = math.sqrt(3)/2*scale
 local numV = math.floor(love.graphics.getHeight()/height)
 local numH = math.floor(love.graphics.getWidth()/scale) - 1
 local terrainChunk
 local value = 1
 local normalValue = 1
--- local water
+local water
 local terrainTexture
 
 function love.load()
+
 	love.graphics.setDefaultFilter("nearest", "nearest")
-	print(numV*numH) -- 45k ~(3.3)
-	love.math.setRandomSeed(500) -- change seed for different terrain gen
+	print(numV*numH)
+	love.math.setRandomSeed(100) -- change seed for different terrain gen
 	Object = require "Libraries/classic/classic"
 	require "Libraries/collisions"
 	require "valueTriangle"
@@ -22,17 +23,17 @@ function love.load()
 
 	terrainChunk = TerrainChunk(scale, terrainTexture)
 	-- water = FluidAutomata(scale)
-	local xShift = love.math.random()*100000
-	local yShift = love.math.random()*100000
-	for i = 1, numV do
-		for j = 1, numH do
-			local value = (love.math.noise((j+i%2/2+ xShift)/numH, (i+yShift)/numV))
+	local xShift = love.math.random()*1000
+	local yShift = love.math.random()*1000
+	for y = 1, numV do
+		for x = 1, numH do
+			local value = (love.math.noise((x+y%2/2+ xShift)/numH, (y+yShift)/numV))
 			if (value < 0.45) then
 				value = 0
 			elseif (value > 0.55) then
 				value = 1
 			end
-			terrainChunk:newPoint(value, i, j)
+			terrainChunk:newPoint(value, y, x)
 			-- water:newAutomaton(0, i, j)
 		end	
 	end
@@ -45,8 +46,8 @@ function love.load()
 	-- local i = 2
 	-- local j = 2
 	-- local value = 1
-	-- -- water:newAutomaton(value, i, j)
-	-- water:intializeAutomata()
+	-- water:newAutomaton(value, i, j)
+	-- water:intialiseAutomata()
 end
 local test = 0
 function love.update(delta)
@@ -60,9 +61,8 @@ end
 
 function love.draw()
 	-- terrainChunk:drawPoints()
-	-- terrainChunk:draw()
 	terrainChunk:drawMesh()
-	-- -- water:drawPoints()
+	-- water:drawPoints()
 	-- water:draw()
 	local x, y = love.mouse.getX(), love.mouse.getY()
 	local windowWidth, windowHeight = love.graphics.getWidth(), love.graphics.getHeight()
@@ -77,7 +77,7 @@ end
 function love.mousemoved(x, y, dx, dy)
 	if(love.mouse.isDown(1)) then
 		local j, i = math.floor(x/scale), math.floor(y/(height))
-		if (j > 0 and j < numH and i > 0 and i < numV) then
+		if (j > 2 and j < numH-2 and i > 2 and i < numV-2) then
 			terrainChunk:newPoint(normalValue, i, j)
 			terrainChunk:isoEdge(i, j, 0.5)
 		end
@@ -87,7 +87,7 @@ function love.mousemoved(x, y, dx, dy)
 		local j, i = math.floor(x/scale), math.floor(y/(height))
 		if (j > 0 and j < numH and i > 0 and i < numV) then
 			-- water:newAutomaton(normalValue, i, j)
-			-- -- water:isoEdge(i, j, 0.5)
+			-- water:isoEdge(i, j, 0.5)
 		end
 	end
 end

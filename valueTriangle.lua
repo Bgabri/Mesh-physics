@@ -2,7 +2,6 @@ ValueTriangle = Object:extend()
 
 function ValueTriangle:new()
 	self.valueVertices = {}
-	self.intraprolatedVertices = {}
 end
 
 function ValueTriangle:addVertex(value, x, y)
@@ -24,28 +23,71 @@ function ValueTriangle:empty(valueVertex1, valueVertex2, value)
 end
 
 function ValueTriangle:intraprolated(middleValue)
-	if (not idklol(self.valueVertices[1], self.valueVertices[2], self.valueVertices[3])) then
+	if (not validCheck(self.valueVertices[1], self.valueVertices[2], self.valueVertices[3])) then
 		local x1, y1, x2, y2, x3, y3 = isoValueIntraprolation(self.valueVertices[1], self.valueVertices[2], self.valueVertices[3], middleValue)
+		local triangleVeritices = {}
+		local count = 0
+		if (self.valueVertices[1].value >= 0.5) then
+			table.insert(triangleVeritices, {self.valueVertices[1].x, self.valueVertices[1].y})
+			count = count + 1
+		end
+
+		if (self.valueVertices[2].value >= 0.5) then
+			table.insert(triangleVeritices, {self.valueVertices[2].x, self.valueVertices[2].y})
+			if (count == 1) then
+				if not (x2 + y2 == 1/0) then
+					table.insert(triangleVeritices, {x2, y2})
+					table.insert(triangleVeritices, {self.valueVertices[1].x, self.valueVertices[1].y})
+				end
+			end
+			count = count + 1
+		end
+
+		if (self.valueVertices[3].value >= 0.5) then
+			table.insert(triangleVeritices, {self.valueVertices[3].x, self.valueVertices[3].y})
+			if (count == 1) then
+				if not (x2 + y2 == 1/0) then
+					table.insert(triangleVeritices, {x2, y2})
+					table.insert(triangleVeritices, {self.valueVertices[1].x, self.valueVertices[1].y})
+				end else if not (x3 + y3 == 1/0) then
+					table.insert(triangleVeritices, {x3, y3})
+					table.insert(triangleVeritices, {self.valueVertices[2].x, self.valueVertices[2].y})
+				end
+			end
+		end
+
 		if not (x1 + y1 == 1/0) then
-			table.insert(self.intraprolatedVertices, {x1, y1})
+			table.insert(triangleVeritices, {x1, y1})
 		end
 		if not (x2 + y2 == 1/0) then
-			table.insert(self.intraprolatedVertices, {x2, y2})
+			table.insert(triangleVeritices, {x2, y2})
 		end
 		if not (x3 + y3 == 1/0) then
-			table.insert(self.intraprolatedVertices, {x3, y3})
+			table.insert(triangleVeritices, {x3, y3})
 		end
+		return triangleVeritices
 	end
-	return self.intraprolatedVertices
+	return {}
 end
 
-function idklol(valueVertex1, valueVertex2, valueVertex3)
+function validCheck(valueVertex1, valueVertex2, valueVertex3)
+	if (valueVertex1.value == nil or valueVertex2.value == nil or valueVertex3.value == nil) then
+		return false
+	end
 	local total = valueVertex1.value + valueVertex2.value + valueVertex3.value
-	return total == 3 or total == 0
+	-- return total == 3 or total == 0
+	return total == 0
 end
 
 function isoValueIntraprolation(valueVertex1, valueVertex2, valueVertex3, middleValue)
 	-- local middleValue = 0.5
+	local function linearIntraprolation(valueVertex1, valueVertex2, middleValue)
+		local intraValue = (middleValue - valueVertex1.value)/(valueVertex2.value - valueVertex1.value)
+		local intraprolatedX = valueVertex1.x + (valueVertex2.x - valueVertex1.x)*intraValue
+		local intraprolatedY = valueVertex1.y + (valueVertex2.y - valueVertex1.y)*intraValue
+		return intraprolatedX, intraprolatedY
+	end
+
 	local intraX1, intraY1 = linearIntraprolation(valueVertex1, valueVertex2, middleValue)
 	local intraX2, intraY2 = linearIntraprolation(valueVertex2, valueVertex3, middleValue)
 	local intraX3, intraY3 = linearIntraprolation(valueVertex1, valueVertex3, middleValue)
@@ -60,11 +102,4 @@ function isoValueIntraprolation(valueVertex1, valueVertex2, valueVertex3, middle
 		intraX3, intraY3 = 1/0, 1/0
 	end -- check isn't efficient/ can be avoided?? 
 	return intraX1, intraY1, intraX2, intraY2, intraX3, intraY3
-end
-
-function linearIntraprolation(valueVertex1, valueVertex2, middleValue)
-	local intraValue = (middleValue - valueVertex1.value)/(valueVertex2.value - valueVertex1.value)
-	local intraprolatedX = valueVertex1.x + (valueVertex2.x - valueVertex1.x)*intraValue
-	local intraprolatedY = valueVertex1.y + (valueVertex2.y - valueVertex1.y)*intraValue
-	return intraprolatedX, intraprolatedY
 end
