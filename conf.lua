@@ -8,9 +8,10 @@ function love.conf(t)
     -- t.window.width = 1020
     t.window.height = 550
     -- t.window.height = 800
-    t.window.x = nil
-    t.window.y = nil 
+    -- t.window.x = nil
+    -- t.window.y = nil 
     t.window.resizable = true
+    t.window.msaa = 4
 
     t.accelerometerjoystick = false
     t.audio.mixwithsystem = false

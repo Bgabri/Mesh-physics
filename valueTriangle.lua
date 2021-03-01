@@ -23,33 +23,33 @@ function ValueTriangle:empty(valueVertex1, valueVertex2, value)
 end
 
 function ValueTriangle:intraprolated(middleValue)
-	if (not validCheck(self.valueVertices[1], self.valueVertices[2], self.valueVertices[3])) then
+	if not (self.valueVertices[1].value + self.valueVertices[2].value + self.valueVertices[3].value == 0) then
 		local x1, y1, x2, y2, x3, y3 = isoValueIntraprolation(self.valueVertices[1], self.valueVertices[2], self.valueVertices[3], middleValue)
 		local triangleVeritices = {}
-		local count = 0
-		if (self.valueVertices[1].value >= 0.5) then
+		local doubled = false
+		if (self.valueVertices[1].value > 0.5) then
 			table.insert(triangleVeritices, {self.valueVertices[1].x, self.valueVertices[1].y})
-			count = count + 1
+			doubled = true
 		end
 
-		if (self.valueVertices[2].value >= 0.5) then
+		if (self.valueVertices[2].value > 0.5) then
 			table.insert(triangleVeritices, {self.valueVertices[2].x, self.valueVertices[2].y})
-			if (count == 1) then
-				if not (x2 + y2 == 1/0) then
+			if (doubled) then
+				if not (x2 == 1/0) then
 					table.insert(triangleVeritices, {x2, y2})
 					table.insert(triangleVeritices, {self.valueVertices[1].x, self.valueVertices[1].y})
 				end
 			end
-			count = count + 1
+			doubled = true
 		end
 
-		if (self.valueVertices[3].value >= 0.5) then
+		if (self.valueVertices[3].value > 0.5) then
 			table.insert(triangleVeritices, {self.valueVertices[3].x, self.valueVertices[3].y})
-			if (count == 1) then
-				if not (x2 + y2 == 1/0) then
+			if (doubled) then
+				if not (x2 == 1/0) then
 					table.insert(triangleVeritices, {x2, y2})
 					table.insert(triangleVeritices, {self.valueVertices[1].x, self.valueVertices[1].y})
-				end else if not (x3 + y3 == 1/0) then
+				elseif not (x3 == 1/0) then
 					table.insert(triangleVeritices, {x3, y3})
 					table.insert(triangleVeritices, {self.valueVertices[2].x, self.valueVertices[2].y})
 				end
@@ -59,24 +59,18 @@ function ValueTriangle:intraprolated(middleValue)
 		if not (x1 + y1 == 1/0) then
 			table.insert(triangleVeritices, {x1, y1})
 		end
+
 		if not (x2 + y2 == 1/0) then
 			table.insert(triangleVeritices, {x2, y2})
 		end
+
 		if not (x3 + y3 == 1/0) then
 			table.insert(triangleVeritices, {x3, y3})
 		end
+
 		return triangleVeritices
 	end
 	return {}
-end
-
-function validCheck(valueVertex1, valueVertex2, valueVertex3)
-	if (valueVertex1.value == nil or valueVertex2.value == nil or valueVertex3.value == nil) then
-		return false
-	end
-	local total = valueVertex1.value + valueVertex2.value + valueVertex3.value
-	-- return total == 3 or total == 0
-	return total == 0
 end
 
 function isoValueIntraprolation(valueVertex1, valueVertex2, valueVertex3, middleValue)

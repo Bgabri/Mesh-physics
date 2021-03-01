@@ -1,5 +1,7 @@
 local fps = 0
-local scale = 3
+local scale = 10
+local zoom = 1
+local shift = 10
 local height = math.sqrt(3)/2*scale
 local numV = math.floor(love.graphics.getHeight()/height)
 local numH = math.floor(love.graphics.getWidth()/scale) - 1
@@ -8,25 +10,26 @@ local value = 1
 local normalValue = 1
 local water
 local terrainTexture
+local canvasTest
 
 function love.load()
 
-	love.graphics.setDefaultFilter("nearest", "nearest")
+	-- love.graphics.setDefaultFilter("nearest", "nearest")
 	print(numV*numH)
-	love.math.setRandomSeed(100) -- change seed for different terrain gen
+	love.math.setRandomSeed(145) -- change seed for different terrain gen
 	Object = require "Libraries/classic/classic"
 	require "Libraries/collisions"
 	require "valueTriangle"
 	require "terrainChunk"
 	require "fluidAutomata"
 	terrainTexture = love.graphics.newImage("mesh.png")
-
+	terrainTexture:setFilter("nearest", "nearest")
 	terrainChunk = TerrainChunk(scale, terrainTexture)
 	-- water = FluidAutomata(scale)
 	local xShift = love.math.random()*1000
 	local yShift = love.math.random()*1000
-	for y = 1, numV do
-		for x = 1, numH do
+	for y = 1, numV+shift*2 do
+		for x = 1, numH+shift*2 do
 			local value = (love.math.noise((x+y%2/2+ xShift)/numH, (y+yShift)/numV))
 			if (value < 0.45) then
 				value = 0
@@ -49,7 +52,9 @@ function love.load()
 	-- water:newAutomaton(value, i, j)
 	-- water:intialiseAutomata()
 end
+
 local test = 0
+
 function love.update(delta)
 	test = test + 1
 	fps = love.timer.getFPS()
@@ -60,27 +65,35 @@ function love.update(delta)
 end
 
 function love.draw()
+	-- love.graphics.setWireframe(true)
+	love.graphics.translate(-shift*scale, -shift*scale)
+	-- love.graphics.scale(zoom, zoom)
 	-- terrainChunk:drawPoints()
 	terrainChunk:drawMesh()
 	-- water:drawPoints()
 	-- water:draw()
-	local x, y = love.mouse.getX(), love.mouse.getY()
+
+	
 	local windowWidth, windowHeight = love.graphics.getWidth(), love.graphics.getHeight()
+	local x, y = love.mouse.getX()+shift*scale, love.mouse.getY()+shift*scale
 	love.graphics.setColor(x/windowWidth, y/windowHeight, 1-x/windowWidth, 1)
 	love.graphics.circle("line", x, y, normalValue*scale/2)
 	love.graphics.setColor(0.0, 1.0, 0.1)
+	love.graphics.origin()
 	love.graphics.print(fps, 0, 0)
 	love.graphics.print("value: " .. normalValue, 0, 20)
 	love.graphics.setColor(1,1,1,1)
 end
 
 function love.mousemoved(x, y, dx, dy)
+	local x = x + shift*scale
+	local y = y + shift*scale
 	if(love.mouse.isDown(1)) then
 		local j, i = math.floor(x/scale), math.floor(y/(height))
-		if (j > 2 and j < numH-2 and i > 2 and i < numV-2) then
+		-- if (j > 2 and j < numH-2 and i > 2 and i < numV-2) then
 			terrainChunk:newPoint(normalValue, i, j)
 			terrainChunk:isoEdge(i, j, 0.5)
-		end
+		-- end
 	end
 
 	if(love.mouse.isDown(2)) then
@@ -97,5 +110,11 @@ function love.wheelmoved(dx, dy)
 	normalValue = math.min(math.ceil(math.abs(value/50)*100)/100, 1)
 end
 
-function love.keypressed()
+function love.keypressed(key)
+	if key == "=" then
+		zoom = zoom + 0.3
+	end
+	if key == "-" then
+		zoom = zoom - 0.3
+	end
 end

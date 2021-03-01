@@ -54,7 +54,6 @@ function reorder(table)
 	local tempTable = {}
 	for i, vertix in ipairs(table) do
 		for j, vertix2 in ipairs(table) do
-		
 		end
 	end
 end
@@ -137,6 +136,7 @@ function TerrainChunk:isoEdge(i, j, middleValue)
 		valueTriangle:addVertex(relativeOctValues[(k+1)%6+1].value, relativeOctValues[(k+1)%6+1].x, relativeOctValues[(k+1)%6+1].y)
 		self:addVertices(valueTriangle:intraprolated(middleValue))
 	end
+	
 	self.mesh = love.graphics.newMesh(self.chunkVertices, "triangles")
 	self.mesh:setTexture(self.texture)
 end
