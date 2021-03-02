@@ -1,5 +1,9 @@
+local scale = 10 -- lower value more samples, higher value less samples
+local seed = love.timer.getTime() -- change seed for different terrain gen
+local wireframe = true -- toggles wire frame on and off
+
+
 local fps = 0
-local scale = 10
 local shift = 10
 local height = math.sqrt(3)/2*scale
 local numV = math.floor(love.graphics.getHeight()/height)
@@ -14,7 +18,7 @@ local saveLoad = require "saveLoad"
 
 function love.load()
 	love.graphics.setDefaultFilter("nearest", "nearest")
-	love.math.setRandomSeed(love.timer.getTime()) -- change seed for different terrain gen
+	love.math.setRandomSeed(seed)
 	Object = require "Libraries/classic/classic"
 	require "Libraries/collisions"
 	require "valueTriangle"
@@ -28,7 +32,7 @@ function love.load()
 	local time = love.timer.getTime()
 	terrainChunk:initialiseMesh(saveLoad.load())
 	local time2 = love.timer.getTime()
-	print(time2-time)
+	print("gen time: "..time2-time)
 
 	-- local i = 2
 	-- local j = 2
@@ -49,7 +53,7 @@ function love.update(delta)
 end
 
 function love.draw()
-	love.graphics.setWireframe(true)
+	love.graphics.setWireframe(wireframe)
 	love.graphics.translate(-shift*scale, -shift*scale)
 	-- terrainChunk:drawPoints()
 	terrainChunk:drawMesh()
