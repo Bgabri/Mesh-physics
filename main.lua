@@ -1,6 +1,5 @@
 local fps = 0
 local scale = 10
-local zoom = 1
 local shift = 10
 local height = math.sqrt(3)/2*scale
 local numV = math.floor(love.graphics.getHeight()/height)
@@ -9,40 +8,25 @@ local terrainChunk
 local value = 1
 local normalValue = 1
 local water
-local terrainTexture
 local canvasTest
+local bitser = require "Libraries/bitser"
+local saveLoad = require "saveLoad"
 
 function love.load()
-
-	-- love.graphics.setDefaultFilter("nearest", "nearest")
-	print(numV*numH)
-	love.math.setRandomSeed(145) -- change seed for different terrain gen
+	love.graphics.setDefaultFilter("nearest", "nearest")
+	love.math.setRandomSeed(love.timer.getTime()) -- change seed for different terrain gen
 	Object = require "Libraries/classic/classic"
 	require "Libraries/collisions"
 	require "valueTriangle"
 	require "terrainChunk"
 	require "fluidAutomata"
-	terrainTexture = love.graphics.newImage("mesh.png")
-	terrainTexture:setFilter("nearest", "nearest")
+
+	local terrainTexture = love.graphics.newImage("mesh.png")
 	terrainChunk = TerrainChunk(scale, terrainTexture)
 	-- water = FluidAutomata(scale)
-	local xShift = love.math.random()*1000
-	local yShift = love.math.random()*1000
-	for y = 1, numV+shift*2 do
-		for x = 1, numH+shift*2 do
-			local value = (love.math.noise((x+y%2/2+ xShift)/numH, (y+yShift)/numV))
-			if (value < 0.45) then
-				value = 0
-			elseif (value > 0.55) then
-				value = 1
-			end
-			terrainChunk:newPoint(value, y, x)
-			-- water:newAutomaton(0, i, j)
-		end	
-	end
 
 	local time = love.timer.getTime()
-	terrainChunk:initialiseMesh()
+	terrainChunk:initialiseMesh(saveLoad.load())
 	local time2 = love.timer.getTime()
 	print(time2-time)
 
@@ -65,15 +49,14 @@ function love.update(delta)
 end
 
 function love.draw()
-	-- love.graphics.setWireframe(true)
+	love.graphics.setWireframe(true)
 	love.graphics.translate(-shift*scale, -shift*scale)
-	-- love.graphics.scale(zoom, zoom)
 	-- terrainChunk:drawPoints()
 	terrainChunk:drawMesh()
 	-- water:drawPoints()
 	-- water:draw()
 
-	
+	love.graphics.setWireframe(false)
 	local windowWidth, windowHeight = love.graphics.getWidth(), love.graphics.getHeight()
 	local x, y = love.mouse.getX()+shift*scale, love.mouse.getY()+shift*scale
 	love.graphics.setColor(x/windowWidth, y/windowHeight, 1-x/windowWidth, 1)
@@ -90,10 +73,11 @@ function love.mousemoved(x, y, dx, dy)
 	local y = y + shift*scale
 	if(love.mouse.isDown(1)) then
 		local j, i = math.floor(x/scale), math.floor(y/(height))
-		-- if (j > 2 and j < numH-2 and i > 2 and i < numV-2) then
+		if not (terrainChunk:valueAtPoint(i, j) == 1) then
 			terrainChunk:newPoint(normalValue, i, j)
 			terrainChunk:isoEdge(i, j, 0.5)
-		-- end
+			-- terrainChunk:initialiseMesh()
+		end
 	end
 
 	if(love.mouse.isDown(2)) then
@@ -107,14 +91,32 @@ end
 
 function love.wheelmoved(dx, dy)
 	value = value + dy
-	normalValue = math.min(math.ceil(math.abs(value/50)*100)/100, 1)
+	normalValue = math.min(math.ceil(value*2)/100, 1)
+	if normalValue >= 1 and normalValue <= 0 then
+		value = value - dy
+		normalValue = math.min(math.ceil(value*2)/100, 1)
+	end
 end
 
 function love.keypressed(key)
-	if key == "=" then
-		zoom = zoom + 0.3
+	if key == "r" then
+		local xShift = love.math.random()*1000
+		local yShift = love.math.random()*1000
+		for y = 1, numV+shift*2 do
+			for x = 1, numH+shift*2 do
+				local value = (love.math.noise((x+y%2/2+ xShift)/numH, (y+yShift)/numV))
+				if (value < 0.45) then
+					value = 0
+				elseif (value > 0.55) then
+					value = 1
+				end
+				terrainChunk:newPoint(value, y, x)
+			end	
+		end
+		terrainChunk:initialiseMesh()
 	end
-	if key == "-" then
-		zoom = zoom - 0.3
-	end
+end
+
+function love.quit()
+	saveLoad.save(terrainChunk)
 end

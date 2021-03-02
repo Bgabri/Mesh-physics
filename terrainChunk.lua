@@ -1,13 +1,21 @@
 TerrainChunk = Object:extend()
 
 function TerrainChunk:new(scale, image)
+	self.scale = scale
 	self.texture = image
 	self.texture:setWrap("repeat", "repeat")
-	self.scale = scale
 	self.height = math.sqrt(3)/2*scale
 	self.terrainPoints = {}
 	self.mesh = nil
 	self.chunkVertices = {}
+end
+
+function TerrainChunk:valueAtPoint(i, j)
+	return self.terrainPoints[i][j]
+end
+
+function TerrainChunk:getPoints()
+	return self.terrainPoints
 end
 
 function TerrainChunk:newPoint(value, i, j)
@@ -21,7 +29,11 @@ function TerrainChunk:newPoint(value, i, j)
 	end
 end
 
-function TerrainChunk:initialiseMesh()
+function TerrainChunk:initialiseMesh(points)
+	self.chunkVertices = {}
+	if not (points == nil) then
+		self.terrainPoints = points
+	end
 	local shiftX = 0.5*self.scale
 	for i = 1, #self.terrainPoints-1 do
 		local row = self.terrainPoints[i]
@@ -43,7 +55,7 @@ function TerrainChunk:initialiseMesh()
 
 		end
 	end
-	print(#self.chunkVertices)
+	print("points: ".. #self.chunkVertices)
 	if(#self.chunkVertices > 0) then
 		self.mesh = love.graphics.newMesh(self.chunkVertices, "triangles")
 		self.mesh:setTexture(self.texture)
