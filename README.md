@@ -5,6 +5,11 @@
 - ``r``: generate new terrain
 
 ### notes
+libraries used:
+- [bitser](https://github.com/gvx/bitser)
+- [classic](https://github.com/rxi/classic)
+- [collisions](https://2dengine.com/?p=intersections)
+
 change values at the top of ``main.lua`` for experimental options
 
 deleting ``data.wld`` may help if it ever gets to laggy
