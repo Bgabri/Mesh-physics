@@ -1,6 +1,8 @@
 local scale = 10 -- lower value more samples, higher value less samples
-local seed = love.timer.getTime() -- change seed for different terrain gen
-local wireframe = true -- toggles wire frame on and off
+local seed = math.floor(love.timer.getTime()) -- change seed for different terrain gen
+local wireframe = true -- toggles wire frame display on/off
+local noiseScale = 1 -- scale at which to generate noise
+-- generate terrain ("r") to see changes
 
 
 local fps = 0
@@ -32,7 +34,7 @@ function love.load()
 	local time = love.timer.getTime()
 	terrainChunk:initialiseMesh(saveLoad.load())
 	local time2 = love.timer.getTime()
-	print("gen time: "..time2-time)
+	print("T: ", time2-time)
 
 	-- local i = 2
 	-- local j = 2
@@ -86,10 +88,17 @@ function love.mousemoved(x, y, dx, dy)
 
 	if(love.mouse.isDown(2)) then
 		local j, i = math.floor(x/scale), math.floor(y/(height))
-		if (j > 0 and j < numH and i > 0 and i < numV) then
+		-- if (j > 0 and j < numH and i > 0 and i < numV) then
+		if not (terrainChunk:valueAtPoint(i, j) == 0) then
+			terrainChunk:newPoint(0, i, j)
+			-- terrainChunk:isoEdge(i, j, 0.5)
+			terrainChunk:initialiseMesh()
+		end	
+
+
 			-- water:newAutomaton(normalValue, i, j)
 			-- water:isoEdge(i, j, 0.5)
-		end
+		-- end
 	end
 end
 
@@ -97,28 +106,29 @@ function love.wheelmoved(dx, dy)
 	value = value + dy
 	normalValue = math.min(math.ceil(value*2)/100, 1)
 	if normalValue >= 1 and normalValue <= 0 then
-		value = value - dy
+		value = 1
 		normalValue = math.min(math.ceil(value*2)/100, 1)
 	end
 end
 
 function love.keypressed(key)
+	local xShift = love.math.random()*1000000
+	local yShift = love.math.random()*1000000
 	if key == "r" then
-		local xShift = love.math.random()*1000
-		local yShift = love.math.random()*1000
 		for y = 1, numV+shift*2 do
 			for x = 1, numH+shift*2 do
-				local value = (love.math.noise((x+y%2/2+ xShift)/numH, (y+yShift)/numV))
-				if (value < 0.45) then
-					value = 0
-				elseif (value > 0.55) then
-					value = 1
-				end
+				local value = (love.math.noise((x+y%2/2+xShift)/numH*noiseScale, (y+yShift)/numV*noiseScale))
+				-- if (value < 0.45) then
+					-- value = 0
+				-- elseif (value > 0.55) then
+					-- value = 1
+				-- end
 				terrainChunk:newPoint(value, y, x)
 			end	
 		end
 		terrainChunk:initialiseMesh()
 	end
+	-- print((numV+shift*2)*(numH+shift*2))
 end
 
 function love.quit()

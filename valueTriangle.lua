@@ -67,8 +67,9 @@ function ValueTriangle:intraprolated(middleValue)
 		if not (x3 + y3 == 1/0) then
 			table.insert(triangleVeritices, {x3, y3})
 		end
-
-		return triangleVeritices
+		if (#triangleVeritices%3 == 0) then
+			return triangleVeritices
+		end
 	end
 	return {}
 end

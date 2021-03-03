@@ -6,6 +6,9 @@ local saveLoader = {
 	end,
 	load = function ()
 		local serializedPoints = love.filesystem.read("data.wld")
+		if (serializedPoints == nil) then
+			return {}
+		end
 		return bitser.loads(serializedPoints)
 	end 
 }
