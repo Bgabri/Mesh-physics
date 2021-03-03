@@ -4,4 +4,11 @@
 - ``left_click + drag``: add terrain
 - ``r``: generate new terrain
 
+### notes
 change values at the top of ``main.lua`` for experimental options
+
+deleting ``data.wld`` may help if it ever gets to laggy
+
+path to ``data.wld``
+- windows: ``C:\Users\user\AppData\Roaming\LOVE\mesh physics\data.wld``
+- mac: ``/Users/gabriele.berardi.21/Library/Application Support/LOVE/mesh physics/data.wld``
