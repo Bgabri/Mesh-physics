@@ -1,6 +1,7 @@
 local scale = 10 -- lower value more samples, higher value less samples
 local seed = math.floor(love.timer.getTime()) -- change seed for different terrain gen
-local wireframe = true -- toggles wire frame display on/off
+-- local wireframe = true -- toggles wire frame display on/off
+local wireframe = false -- toggles wire frame display on/off
 local noiseScale = 1 -- scale at which to generate noise
 -- generate terrain ("r") to see changes
 
@@ -13,10 +14,10 @@ local numH = math.floor(love.graphics.getWidth()/scale) - 1
 local terrainChunk
 local value = 1
 local normalValue = 1
-local water
 local canvasTest
 local bitser = require "Libraries/bitser"
 local saveLoad = require "saveLoad"
+-- local water = nil
 
 function love.load()
 	love.graphics.setDefaultFilter("nearest", "nearest")
@@ -28,50 +29,86 @@ function love.load()
 	require "fluidAutomata"
 
 	local terrainTexture = love.graphics.newImage("mesh.png")
+	local waterTexture = love.graphics.newImage("water.png")
 	terrainChunk = TerrainChunk(scale, terrainTexture)
-	-- water = FluidAutomata(scale)
+	-- water = FluidAutomata(scale, waterTexture)
+
+	local loadedPoints = saveLoad.load()
+	local points = {}
+	local yMax = numV+shift*2
+	local xMax = numH+shift*2
+
+	if(#loadedPoints < yMax) then
+		yMax = #loadedPoints
+	end
+
+	if(#loadedPoints < xMax) then
+		if(loadedPoints[1] == nil) then
+			xMax = 0
+		else
+			xMax = #loadedPoints[1]
+		end
+	end
+
+	for y = 1, yMax do
+		table.insert(points, {})
+		for x = 1, xMax do
+			table.insert(points[y], loadedPoints[y][x])
+		end
+	end
 
 	local time = love.timer.getTime()
-	terrainChunk:initialiseMesh(saveLoad.load())
+	terrainChunk:initialiseMesh(points)
 	local time2 = love.timer.getTime()
-	print("T: ", time2-time)
+	print("t: ", time2-time)
 
-	-- local i = 2
-	-- local j = 2
-	-- local value = 1
-	-- water:newAutomaton(value, i, j)
+
+	-- for y = 1, numV+shift*2 do
+	-- 	for x = 1, numH+shift*2 do
+	-- 		-- local value = (love.math.noise((x+y%2/2+xShift)/numH*noiseScale, (y+yShift)/numV*noiseScale))
+	-- 		local value = 0
+	-- 		if (value < 0.45) then
+	-- 			value = 0
+	-- 		elseif (value > 0.55) then
+	-- 			value = 1
+	-- 		end
+	-- 		water:newAutomaton(value, y, x)
+	-- 	end	
+	-- end
+
 	-- water:intialiseAutomata()
 end
 
 local test = 0
-
 function love.update(delta)
-	test = test + 1
 	fps = love.timer.getFPS()
-	if(test%4 == 0) then
-		-- water:update(delta)
-		test = 0
-	end
+	-- test = test + 1
+	-- if(test%4 == 0) then
+	-- 	water:update(delta)
+	-- 	test = 0
+	-- end
 end
 
 function love.draw()
 	love.graphics.setWireframe(wireframe)
 	love.graphics.translate(-shift*scale, -shift*scale)
-	-- terrainChunk:drawPoints()
-	terrainChunk:drawMesh()
-	-- water:drawPoints()
-	-- water:draw()
+		terrainChunk:drawMesh()
+		terrainChunk:drawPoints()
+		-- water:drawPoints()
+
+		-- water:draw()
 
 	love.graphics.setWireframe(false)
-	local windowWidth, windowHeight = love.graphics.getWidth(), love.graphics.getHeight()
-	local x, y = love.mouse.getX()+shift*scale, love.mouse.getY()+shift*scale
-	love.graphics.setColor(x/windowWidth, y/windowHeight, 1-x/windowWidth, 1)
-	love.graphics.circle("line", x, y, normalValue*scale/2)
-	love.graphics.setColor(0.0, 1.0, 0.1)
+		local windowWidth, windowHeight = love.graphics.getWidth(), love.graphics.getHeight()
+		local x, y = love.mouse.getX()+shift*scale, love.mouse.getY()+shift*scale
+		love.graphics.setColor(x/windowWidth, y/windowHeight, 1-x/windowWidth, 1)
+		love.graphics.circle("line", x, y, normalValue*scale/2)
+		love.graphics.setColor(0.0, 1.0, 0.1)
+
 	love.graphics.origin()
-	love.graphics.print(fps, 0, 0)
-	love.graphics.print("value: " .. normalValue, 0, 20)
-	love.graphics.setColor(1,1,1,1)
+		love.graphics.print(fps, 0, 0)
+		love.graphics.print("value: " .. normalValue, 0, 20)
+		love.graphics.setColor(1,1,1,1)
 end
 
 function love.mousemoved(x, y, dx, dy)
@@ -88,17 +125,14 @@ function love.mousemoved(x, y, dx, dy)
 
 	if(love.mouse.isDown(2)) then
 		local j, i = math.floor(x/scale), math.floor(y/(height))
-		-- if (j > 0 and j < numH and i > 0 and i < numV) then
-		if not (terrainChunk:valueAtPoint(i, j) == 0) then
-			terrainChunk:newPoint(0, i, j)
-			-- terrainChunk:isoEdge(i, j, 0.5)
-			terrainChunk:initialiseMesh()
-		end	
-
-
-			-- water:newAutomaton(normalValue, i, j)
-			-- water:isoEdge(i, j, 0.5)
+		-- if not (terrainChunk:valueAtPoint(i, j) == 0) then
+			-- terrainChunk:newPoint(0, i, j)
+			-- -- terrainChunk:isoEdge(i, j, 0.5)
+			-- terrainChunk:initialiseMesh()
 		-- end
+			-- water:newAutomaton(1, i, j)
+			-- water:isoEdge(i, j, 0.5)
+			-- water:intialiseAutomata()
 	end
 end
 
@@ -118,17 +152,16 @@ function love.keypressed(key)
 		for y = 1, numV+shift*2 do
 			for x = 1, numH+shift*2 do
 				local value = (love.math.noise((x+y%2/2+xShift)/numH*noiseScale, (y+yShift)/numV*noiseScale))
-				-- if (value < 0.45) then
-					-- value = 0
-				-- elseif (value > 0.55) then
-					-- value = 1
-				-- end
+				if (value < 0.40) then
+					value = 0
+				elseif (value > 0.60) then
+					value = 1
+				end
 				terrainChunk:newPoint(value, y, x)
 			end	
 		end
 		terrainChunk:initialiseMesh()
 	end
-	-- print((numV+shift*2)*(numH+shift*2))
 end
 
 function love.quit()

@@ -14,6 +14,7 @@ function TerrainChunk:new(scale, image)
 	self.height = math.sqrt(3)/2*scale
 
 	self.terrainPoints = {}
+	self.mesh = {}
 	self.mesh = nil
 	self.workingLength = 0
 end
@@ -43,7 +44,7 @@ function TerrainChunk:initialiseMesh(points)
 		for k,v in ipairs(vertices) do
 			local vertixTable = {
 				v[1], v[2],
-				v[1]/self.textureWidth/self.scale, v[2]/self.textureHeight/self.scale,
+				v[1]/self.textureWidth/2, v[2]/self.textureHeight/2,
 				1, 1, 1, 1
 			}
 			table.insert(meshVertices, vertixTable)
@@ -54,28 +55,30 @@ function TerrainChunk:initialiseMesh(points)
 		self.terrainPoints = points
 	end
 	local shiftX = 0.5*self.scale
+
+	local valueTriangle = ValueTriangle()
+	valueTriangle:addVertex(0, 0, 0)
+	valueTriangle:addVertex(0, 0, 0)
+	valueTriangle:addVertex(0, 0, 0)
+
 	for i = 1, #self.terrainPoints-1 do
 		local row = self.terrainPoints[i]
 		for j = #row-1, 2-i%2, -1 do
 			local x, y = (j + i%2/2)*self.scale, i*self.height
 			local value = self.terrainPoints[i][j]
 
-			local valueTriangle = ValueTriangle()
-			valueTriangle:addVertex(value, x, y) -- current node
-			valueTriangle:addVertex(self.terrainPoints[i][j+1], x + self.scale, y) -- left node
-			valueTriangle:addVertex(self.terrainPoints[i+1][j+i%2], x + shiftX, y + self.height) -- bottom node
+			valueTriangle:replaceVertex(1, value, x, y) -- current node
+			valueTriangle:replaceVertex(2, self.terrainPoints[i][j+1], x + self.scale, y) -- left node
+			valueTriangle:replaceVertex(3, self.terrainPoints[i+1][j+i%2], x + shiftX, y + self.height) -- bottom node
 			addVertices(valueTriangle:intraprolated(0.5)) -- iso up
-
-			local valueTriangle = ValueTriangle()
-			valueTriangle:addVertex(value, x, y) -- current node
-			valueTriangle:addVertex(self.terrainPoints[i+1][j+i%2-1], x - shiftX, y + self.height) -- b left node
-			valueTriangle:addVertex(self.terrainPoints[i+1][j+i%2], x + shiftX, y + self.height) -- b right node
+			
+			valueTriangle:replaceVertex(2, self.terrainPoints[i+1][j+i%2-1], x - shiftX, y + self.height) -- b left node
 			addVertices(valueTriangle:intraprolated(0.5)) -- iso down
 		end
 	end
 	self.workingLength = #meshVertices
 	if (self.workingLength > 0) then
-		self.mesh = love.graphics.newMesh(self.workingLength+18000, "triangles")
+		self.mesh = love.graphics.newMesh(self.workingLength+36000, "triangles")
 		self.mesh:setVertices(meshVertices, 1, self.workingLength)
 		self.mesh:setTexture(self.texture)
 		self.mesh:setDrawRange(1, self.workingLength)
@@ -168,6 +171,7 @@ function TerrainChunk:isoEdge(i, j, middleValue)
 			j = (j+i%2-1)*2+1	--  · ·
 		}
 	}
+
 	for k = 0, 5 do
 		local valueTriangle = ValueTriangle()
 		valueTriangle:addVertex(value, x, y)
@@ -180,6 +184,7 @@ end
 
 function TerrainChunk:drawMesh()
 	if not (self.mesh == nil) then
+		love.graphics.setColor(1, 1, 1, 1)
 		love.graphics.draw(self.mesh)
 	end
 end

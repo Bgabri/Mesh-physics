@@ -13,6 +13,15 @@ function ValueTriangle:addVertex(value, x, y)
 	table.insert(self.valueVertices, valueVertex)
 end
 
+function ValueTriangle:replaceVertex(pos, value, x, y)
+	local valueVertex = {
+		value = value,
+		x = x,
+		y = y
+	}
+	self.valueVertices[pos] = valueVertex
+end
+
 function ValueTriangle:empty(valueVertex1, valueVertex2, value)
 	for i,v in ipairs(self.valueVertices) do
 		if not (v.value == 0) then
@@ -75,7 +84,6 @@ function ValueTriangle:intraprolated(middleValue)
 end
 
 function isoValueIntraprolation(valueVertex1, valueVertex2, valueVertex3, middleValue)
-	-- local middleValue = 0.5
 	local function linearIntraprolation(valueVertex1, valueVertex2, middleValue)
 		local intraValue = (middleValue - valueVertex1.value)/(valueVertex2.value - valueVertex1.value)
 		local intraprolatedX = valueVertex1.x + (valueVertex2.x - valueVertex1.x)*intraValue

@@ -1,9 +1,9 @@
-FluidAutomata = Object:extend()
+FluidAutomata = TerrainChunk:extend()
 
-function FluidAutomata:new(scale)
+function FluidAutomata:new(scale, image)
 	self.world = {}
 	self.fluidValues = {}
-	self.fluidChunk = TerrainChunk(scale)
+	self.fluidChunk = TerrainChunk(scale, image)
 end
 
 function FluidAutomata:newAutomaton(value, i, j)
@@ -19,7 +19,7 @@ function FluidAutomata:newAutomaton(value, i, j)
 end
 
 function FluidAutomata:intialiseAutomata()
-	self.fluidChunk:initialiseMesh()
+	self.fluidChunk:initialiseMesh(self.fluidValues)
 end
 
 function FluidAutomata:update(delta)
@@ -103,3 +103,4 @@ end
 function FluidAutomata:drawPoints()
 	self.fluidChunk:drawPoints()
 end
+
