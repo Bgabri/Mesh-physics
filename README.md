@@ -1,8 +1,10 @@
 # Mesh-physics
   Download Löve2D from [love2d.org](https://love2d.org) to run the code
 ### controls
-- ``left_click + drag``: add terrain
+- ``left_click``: add terrain
 - ``r``: generate new terrain
+- ``wasd/ arrow_keys``: pan around
+- ``space``: recalculates mesh
 
 ### notes
 libraries used:
@@ -11,8 +13,6 @@ libraries used:
 - [collisions](https://2dengine.com/?p=intersections)
 
 change values at the top of ``main.lua`` for experimental options
-
-deleting ``data.wld`` may help if it ever gets to laggy
 
 path to ``data.wld``
 - windows: ``C:\Users\user\AppData\Roaming\LOVE\mesh physics\data.wld``
