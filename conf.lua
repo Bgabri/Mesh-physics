@@ -3,7 +3,7 @@ function love.conf(t)
     t.version = "11.3"
     t.console = true
 
-    t.window.title = "Test"
+    t.window.title = "Marching squares"
     t.window.width = 550
     -- t.window.width = 1020
     t.window.height = 550
@@ -11,7 +11,7 @@ function love.conf(t)
     -- t.window.x = nil
     -- t.window.y = nil 
     t.window.resizable = true
-    t.window.msaa = 4
+    t.window.msaa = 2
 
     t.accelerometerjoystick = false
     t.audio.mixwithsystem = false

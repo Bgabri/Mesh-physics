@@ -11,12 +11,11 @@ function TerrainChunk:new(scale, image)
 	end
 
 	self.scale = scale
-	self.height = math.sqrt(3)/2*scale
 
-	self.terrainPoints = {}
-	self.mesh = {}
+	-- self.terrainPoints = {}
 	self.mesh = nil
 	self.workingLength = 0
+	self.meshVertices = {}
 end
 
 function TerrainChunk:valueAtPoint(i, j)
@@ -39,7 +38,7 @@ function TerrainChunk:newPoint(value, i, j)
 end
 
 function TerrainChunk:initialiseMesh(points)
-	local meshVertices = {}
+	self.meshVertices = {}
 	local function addVertices(vertices)
 		for k,v in ipairs(vertices) do
 			local vertixTable = {
@@ -47,42 +46,39 @@ function TerrainChunk:initialiseMesh(points)
 				v[1]/self.textureWidth/2, v[2]/self.textureHeight/2,
 				1, 1, 1, 1
 			}
-			table.insert(meshVertices, vertixTable)
+			table.insert(self.meshVertices, vertixTable)
 		end
 	end
 
 	if not (points == nil) then
 		self.terrainPoints = points
 	end
-	local shiftX = 0.5*self.scale
+	local shiftX = self.scale/2
 
-	local valueTriangle = ValueTriangle()
-	valueTriangle:addVertex(0, 0, 0)
-	valueTriangle:addVertex(0, 0, 0)
-	valueTriangle:addVertex(0, 0, 0)
+	local valueSquare = ValueSquare()
 
 	for i = 1, #self.terrainPoints-1 do
 		local row = self.terrainPoints[i]
-		for j = #row-1, 2-i%2, -1 do
-			local x, y = (j + i%2/2)*self.scale, i*self.height
+		for j = 1, #row-1 do
+			local x, y = j*self.scale, i*self.scale
 			local value = self.terrainPoints[i][j]
 
-			valueTriangle:replaceVertex(1, value, x, y) -- current node
-			valueTriangle:replaceVertex(2, self.terrainPoints[i][j+1], x + self.scale, y) -- left node
-			valueTriangle:replaceVertex(3, self.terrainPoints[i+1][j+i%2], x + shiftX, y + self.height) -- bottom node
-			addVertices(valueTriangle:intraprolated(0.5)) -- iso up
-			
-			valueTriangle:replaceVertex(2, self.terrainPoints[i+1][j+i%2-1], x - shiftX, y + self.height) -- b left node
-			addVertices(valueTriangle:intraprolated(0.5)) -- iso down
+			valueSquare:replaceVertex(1, value, x, y) -- current node (top left)
+			valueSquare:replaceVertex(2, self.terrainPoints[i][j+1], x + self.scale, y) -- top right node
+			valueSquare:replaceVertex(3, self.terrainPoints[i+1][j+1], x + self.scale, y + self.scale) -- bottom right node
+			valueSquare:replaceVertex(4, self.terrainPoints[i+1][j], x, y + self.scale) -- bottom left node
+			addVertices(valueSquare:intraprolated(0.5))
 		end
 	end
-	self.workingLength = #meshVertices
+
+	self.workingLength = #self.meshVertices
 	if (self.workingLength > 0) then
 		self.mesh = love.graphics.newMesh(self.workingLength+36000, "triangles")
-		self.mesh:setVertices(meshVertices, 1, self.workingLength)
+		self.mesh:setVertices(self.meshVertices, 1, self.workingLength)
 		self.mesh:setTexture(self.texture)
 		self.mesh:setDrawRange(1, self.workingLength)
 	end
+
 	print("points: ".. self.workingLength)
 end
 
@@ -95,90 +91,63 @@ function reorder(table)
 end
 
 function TerrainChunk:isoEdge(i, j, middleValue)
-	local height = love.graphics.getHeight()
-	local width = love.graphics.getWidth()
 	local shiftX = 0.5*self.scale
-	local numV = math.floor(love.graphics.getHeight()/self.height)
-	local numH = math.floor(love.graphics.getWidth()/self.scale) - 1
 
 	local function addVertices(vertices)
 		for k,v in ipairs(vertices) do
-			self.workingLength = self.workingLength + 1
 			local vertixTable = {
 				v[1], v[2],
-				v[1]/self.textureWidth/self.scale, v[2]/self.textureHeight/self.scale,
+				v[1]/self.textureWidth/2, v[2]/self.textureHeight/2,
 				1, 1, 1, 1
 			}
 
+			self.workingLength = self.workingLength + 1
+			table.insert(self.meshVertices,vertixTable)
+
 			if (self.workingLength > self.mesh:getVertexCount()) then
-				break
-				-- self.mesh = love.graphics.newMesh(self.workingLength+100000, "triangles")
-				-- self.mesh:setTexture(self.texture)
-				-- self.mesh:setDrawRange(1, self.workingLength)
-				-- self.mesh:setVertices(tempVertexMap, 1, self.workingLength)
+				self.mesh = love.graphics.newMesh(self.workingLength + 36000, "triangles")
+				self.mesh:setTexture(self.texture)
+				self.mesh:setDrawRange(1, self.workingLength)
+				self.mesh:setVertices(self.meshVertices, 1, self.workingLength)
+				print("newLength: "..self.workingLength)
 			end
 			self.mesh:setVertex(self.workingLength, vertixTable)
 		end
 	end
 
-	local x, y = (j + i%2/2)*self.scale, i*self.height
+	local x, y = j*self.scale, i*self.scale
 	local value = self.terrainPoints[i][j]
-	local relativeOctValues = {
-		{
-			value = self.terrainPoints[i-1][j+i%2-1],--  • ·
-			x = x - shiftX,							 -- · · ·
-			y = y - self.height						 --  · ·
-		},{
-			value = self.terrainPoints[i-1][j+i%2],  --  · •
-			x = x + shiftX,							 -- · · ·
-			y = y - self.height						 --  · ·
-		},{
-			value = self.terrainPoints[i][j+1], 	 --  · ·
-			x = x + self.scale,					  	 -- · · •
-			y = y								  	 --  · ·
-		},{
-			value = self.terrainPoints[i+1][j+i%2],	 --  · ·
-			x = x + shiftX,							 -- · · ·
-			y = y + self.height						 --  · •
-		},{
-			value = self.terrainPoints[i+1][j+i%2-1],--  · ·
-			x = x - shiftX,							 -- · · ·
-			y = y + self.height						 --  • ·
-		},{
-			value = self.terrainPoints[i][j-1], 	 --  · ·
-			x = x - self.scale,					  	 -- • · ·
-			y = y								  	 --  · ·
-		}
-	}
-	local relativeTableCords = {
-		{						--  * •
-			i = i-1,			-- · • ·
-			j = (j+i%2-1)*2		--  · ·
-		},{						--  · *
-			i = i-1,			-- · • •
-			j = (j+i%2)*2+1		--  · ·
-		},{						--  · ·
-			i = i,				-- · * •
-			j = j*2				--  · •
-		},{						--  · ·
-			i = i,				-- · * ·
-			j = j*2+1			--  • •
-		},{						--  · ·
-			i = i,				-- * • ·
-			j = (j-1)*2			--  • ·
-		},{						--  * ·
-			i = i-1,			-- • • ·
-			j = (j+i%2-1)*2+1	--  · ·
-		}
-	}
+	local valueSquare = ValueSquare()
+	-- for k = 1, 4 do
+		-- print(2*((k+2)%4+1), k*2-1, k*2)
+		
+		-- valueSquare:replaceVertex(2, self.terrainPoints[i + nygh[k*2          ].y][j + nygh[k*2          ].x], x + self.scale*nygh[k*2          ].x, y + self.scale*nygh[k*2          ].y) --
+		-- valueSquare:replaceVertex(3, self.terrainPoints[i + nygh[k*2-1        ].y][j + nygh[k*2-1        ].x], x + self.scale*nygh[k*2-1        ].x, y + self.scale*nygh[k*2-1        ].y) -- opposite corner
+		-- valueSquare:replaceVertex(4, self.terrainPoints[i + nygh[2*((k+2)%4+1)].y][j + nygh[2*((k+2)%4+1)].x], x + self.scale*nygh[2*((k+2)%4+1)].x, y + self.scale*nygh[2*((k+2)%4+1)].y) --
+		valueSquare:replaceVertex(1, self.terrainPoints[i - 1][j - 1], x - self.scale, y - self.scale)
+		valueSquare:replaceVertex(2, self.terrainPoints[i - 1][j + 0], x, y - self.scale) -- ••·
+		valueSquare:replaceVertex(3, value, x, y) --                                         •*·
+		valueSquare:replaceVertex(4, self.terrainPoints[i + 0][j - 1], x - self.scale, y) -- ···
+		addVertices(valueSquare:intraprolated(middleValue))
 
-	for k = 0, 5 do
-		local valueTriangle = ValueTriangle()
-		valueTriangle:addVertex(value, x, y)
-		valueTriangle:addVertex(relativeOctValues[k%6+1].value, relativeOctValues[k%6+1].x, relativeOctValues[k%6+1].y)
-		valueTriangle:addVertex(relativeOctValues[(k+1)%6+1].value, relativeOctValues[(k+1)%6+1].x, relativeOctValues[(k+1)%6+1].y)
-		addVertices(valueTriangle:intraprolated(middleValue))
-	end
+		valueSquare:replaceVertex(1, self.terrainPoints[i - 1][j + 0], x, y - self.scale)
+		valueSquare:replaceVertex(2, self.terrainPoints[i - 1][j + 1], x + self.scale, y - self.scale) -- ·••
+		valueSquare:replaceVertex(3, self.terrainPoints[i + 0][j + 1], x + self.scale, y)              -- ·*•
+		valueSquare:replaceVertex(4, value, x, y)                                                      -- ···
+		addVertices(valueSquare:intraprolated(middleValue))
+
+		valueSquare:replaceVertex(1, value, x, y)
+		valueSquare:replaceVertex(2, self.terrainPoints[i + 0][j + 1], x + self.scale, y)              -- ···
+		valueSquare:replaceVertex(3, self.terrainPoints[i + 1][j + 1], x + self.scale, y + self.scale) -- ·*•
+		valueSquare:replaceVertex(4, self.terrainPoints[i + 1][j + 0], x, y + self.scale)              -- ·••
+		addVertices(valueSquare:intraprolated(middleValue))
+
+		valueSquare:replaceVertex(1, self.terrainPoints[i + 0][j - 1], x - self.scale, y)
+		valueSquare:replaceVertex(2, value, x, y)                                                      -- ···
+		valueSquare:replaceVertex(3, self.terrainPoints[i + 1][j + 0], x, y + self.scale)              -- •*·
+		valueSquare:replaceVertex(4, self.terrainPoints[i + 1][j - 1], x - self.scale, y + self.scale) -- ••·
+		addVertices(valueSquare:intraprolated(middleValue))
+
 	self.mesh:setDrawRange(1, self.workingLength)
 end
 
@@ -192,10 +161,9 @@ end
 function TerrainChunk:drawPoints()
 	for i, row in ipairs(self.terrainPoints) do
 		for j,v in ipairs(row) do
-			-- if (v > 0) then
-				local x, y = (j + i%2/2)*self.scale, i*self.height
+			-- if (v >= 0.4) then
 				love.graphics.setColor(v+0.1, v+0.1, v+0.1)
-				love.graphics.points(x, y)
+				love.graphics.points(j*self.scale, i*self.scale)
 			-- end
 		end
 	end
