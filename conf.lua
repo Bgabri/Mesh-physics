@@ -11,7 +11,7 @@ function love.conf(t)
     -- t.window.x = nil
     -- t.window.y = nil 
     t.window.resizable = true
-    t.window.msaa = 2
+    t.window.msaa = 3
 
     t.accelerometerjoystick = false
     t.audio.mixwithsystem = false
