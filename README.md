@@ -4,7 +4,6 @@
 - ``left_click``: add terrain
 - ``r``: generate new terrain
 - ``wasd/ arrow_keys``: pan around
-- ``space``: recalculates mesh
 
 ### notes
 libraries used:
