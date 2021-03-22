@@ -17,22 +17,6 @@ function pointOnSegment(px, py, x1, y1, x2, y2)
   return x1 + u*dx, y1 + u*dy
 end
 
-function pointOnSegment(px, py, x1, y1, x2, y2)
-  local cx, cy = px - x1, py - y1
-  local dx, dy = x2 - x1, y2 - y1
-  local d = (dx*dx + dy*dy)
-  if d == 0 then
-    return x1, y1
-  end
-  local u = (cx*dx + cy*dy)/d
-  if u < 0 then
-    u = 0
-  elseif u > 1 then
-    u = 1
-  end
-  return x1 + u*dx, y1 + u*dy
-end
-
 function pointOnBox(px, py, x, y, hw, hh)
   local qx, qy = px - x, py - y
   if qx > hw then
@@ -236,8 +220,6 @@ function segmentVsAABB(x1, y1, x2, y2, l, t, r, b)
   -- two points
   return true, qx, qy, x1 + nx*tmax, y1 + ny*tmax
 end
-
-
 
 function circleVsCircle(cx, cy, r, cx2, cy2, r2)
   return pointInCircle(cx, cy, cx2, cy2, r + r2)

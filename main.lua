@@ -1,16 +1,17 @@
 local scale = 5 -- number of pixels between each sample
+local chunkSize = 150 -- in pixels
 local seed = math.floor(love.timer.getTime()) -- change seed for different terrain gen
 local wireframe = false -- toggles wire frame display on/off
-local noiseScale = 0.5 -- scale at which to generate noise
-local chunkSize = 100 -- in pixels
+local noiseScale = 1 -- scale at which to generate noise
 -- to see changes generate terrain ("r")
+running = {}
 
 local fps = 0
 -- local shift = 10
 local numV = math.floor(chunkSize/scale) + 1
 local numH = math.floor(chunkSize/scale) + 1
-local terrain = {}
-local saveLoad = require "saveLoad"
+local terrain
+local saveLoad = require "Modules/saveLoad"
 local camXOffset = 0
 local camYOffset = 0
 local zoom = 1
@@ -22,50 +23,15 @@ function love.load()
 
 	Object = require "Libraries/classic/classic"
 	require "Libraries/collisions"
-	require "valueSquare"
-	require "terrainChunk"
-	require "fluidAutomata"
+	require "Modules/valueSquare"
+	require "Modules/terrainChunk"
+	require "Modules/fluidAutomata"
+	require "Modules/terrain"
 
 	local terrainTexture = love.graphics.newImage("Assets/mesh.png")
 	local waterTexture = love.graphics.newImage("Assets/water.png")
+	terrain = Terrain(terrainTexture, scale, chunkSize, noiseScale, love.math.random()*1000000, love.math.random()*1000000)
 
-	local screenWidth = math.ceil(love.graphics.getWidth()/chunkSize)+1
-	local screenHeight = math.ceil(love.graphics.getHeight()/chunkSize)+1
-	for x = -1, screenWidth do
-		for y = -1, screenHeight do
-			local terrainChunk = TerrainChunk(scale, terrainTexture, {chunkSize*x, chunkSize*y})
-			table.insert(terrain, terrainChunk)
-		end
-	end
-
-	local loadedPoints = saveLoad.load()
-	local points = {}
-	local yMax = numV
-	local xMax = numH
-
-	if(#loadedPoints < yMax) then
-		yMax = #loadedPoints
-	end
-
-	if(#loadedPoints < xMax) then
-		if(loadedPoints[1] == nil) then
-			xMax = 0
-		else
-			xMax = #loadedPoints[1]
-		end
-	end
-
-	for y = 1, yMax do
-		table.insert(points, {})
-		for x = 1, xMax do
-			table.insert(points[y], loadedPoints[y][x])
-		end
-	end
-
-	local time = love.timer.getTime()
-	terrain[1]:initialiseMesh(points)
-	local time2 = love.timer.getTime()
-	print("t: "..time2-time)
 	-- for y = 1, numV+shift*2 do
 	-- 	for x = 1, numH+shift*2 do
 	-- 		-- local value = (love.math.noise((x+y%2/2+xShift)/numH*noiseScale, (y+yShift)/numV*noiseScale))
@@ -96,8 +62,9 @@ function love.update(delta)
 		local y = love.mouse.getY() - camYOffset
 		local i = math.floor(y/scale)
 		local j = math.floor(x/scale)
-		local value = terrain[1]:valueAtPoint(i, j)
-		if (value <= 1) then
+
+		local value = terrain[1]:valueAtPoint(i, j) or 1
+		if (value < 1) then
 			terrain[1]:newPoint(value + delta*math.cos(value*math.pi/2)*3, i, j)
 			terrain[1]:isoEdge(i, j, 0.5)
 			-- terrain[1]:initialiseMesh()
@@ -109,39 +76,41 @@ function love.update(delta)
 		local y = love.mouse.getY() - camYOffset
 		local i = math.floor(y/scale)
 		local j = math.floor(x/scale)
-		local value = terrain[1]:valueAtPoint(i, j)
-		if (value >= 0) then
+		local value = terrain[1]:valueAtPoint(i, j) or 0
+		if (value > 0) then
 			terrain[1]:newPoint(value - delta*math.sin(value*math.pi/2)*3, i, j)
 			terrain[1]:isoEdge(i, j, 0.5)
 			-- terrain[1]:initialiseMesh()
 		end
 	end
 
+	if (#running > 0 and running[1]:getThreadValue()) then
+		table.remove(running, 1)
+	end
+
 	if (love.keyboard.isDown("a") or love.keyboard.isDown("left")) then
-		camXOffset = camXOffset + delta*300*zoom
+		camXOffset = camXOffset + delta*300*math.sqrt(math.abs(zoom))
 	end
 	if (love.keyboard.isDown("d") or love.keyboard.isDown("right")) then
-		camXOffset = camXOffset - delta*300*zoom
+		camXOffset = camXOffset - delta*300*math.sqrt(math.abs(zoom))
 	end
 	if (love.keyboard.isDown("s") or love.keyboard.isDown("down")) then
-		camYOffset = camYOffset - delta*300*zoom
+		camYOffset = camYOffset - delta*300*math.sqrt(math.abs(zoom))
 	end
 	if (love.keyboard.isDown("w") or love.keyboard.isDown("up")) then
-		camYOffset = camYOffset + delta*300*zoom
+		camYOffset = camYOffset + delta*300*math.sqrt(math.abs(zoom))
 	end
 end
 
 function love.draw()
 	love.graphics.setWireframe(wireframe)
-		for _, chunk in ipairs(terrain) do
-			love.graphics.translate(camXOffset, camYOffset)
-			love.graphics.setColor(1, 1, 1, 1)
-			love.graphics.scale(zoom, zoom)
-				chunk:drawMesh()
-			-- love.graphics.translate(camXOffset, camYOffset)
-			-- love.graphics.scale(zoom, zoom)
-			-- 	chunk:drawPoints()
-		end
+	love.graphics.translate(camXOffset, camYOffset)
+	if (zoom < 0) then love.graphics.scale(-1/zoom, -1/zoom) else
+		love.graphics.scale(zoom, zoom)
+	end
+
+	terrain:draw()
+	-- terrain:drawPoints()
 		-- water:drawPoints()
 		-- water:draw()
 
@@ -155,44 +124,33 @@ function love.draw()
 			love.graphics.circle("line", x, y, 0.5*scale/2)
 		love.graphics.setColor(0.0, 1.0, 0.1)
 			love.graphics.print(fps, 0, 0)
-		love.graphics.setColor(1, 1, 1, 1)
+			love.graphics.print(math.floor(camXOffset)..", "..math.floor(camYOffset), 0, 20)
+			love.graphics.print(zoom, 0, 40)
 end
 
 function love.keypressed(key)
-	local xShift = love.math.random()*1000000
-	local yShift = love.math.random()*1000000
-		if key == "r" then
-			local time = love.timer.getTime()
-			for i, chunk in ipairs(terrain) do
-				local chunkX, chunkY =  chunk:getShift()
-				local xShift = xShift + chunkX/scale
-				local yShift = yShift + chunkY/scale
-				for y = 1, numV do
-					for x = 1, numH do
-						-- local value = 0
-						local value = love.math.noise((x+xShift)/numH*noiseScale, (y+yShift)/numV*noiseScale)
-						if (value < 0.40) then
-							value = 0
-						elseif (value > 0.60) then
-							value = 1
-						end
-						chunk:newPoint(value, y, x)
-					end	
-				end
-				chunk:initialiseMesh()
-			end
-		local time2 = love.timer.getTime()
-		print("t: "..time2-time)
-	elseif key == "space" then
-		terrain[1]:initialiseMesh()
+	if key == "r" then
+		local xShift = love.math.random()*1000000
+		local yShift = love.math.random()*1000000
+		if (#running == 0) then
+			terrain:generate(xShift, yShift)
+		end
 	elseif key == "=" then
 		zoom = zoom + 1
+		camXOffset = camXOffset - love.graphics.getHeight()/2
+		camYOffset = camYOffset - love.graphics.getWidth()/2
 	elseif key == "-" then
 		zoom = zoom - 1
+		-- camXOffset = camXOffset + love.graphics.getHeight()/4
+		-- camYOffset = camYOffset + love.graphics.getWidth()/4
 	end
 
 end
 
 function love.quit()
-	saveLoad.save(terrain[1])
+	-- saveLoad.save(terrain[1])
+end
+
+
+function love.resize()
 end
