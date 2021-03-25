@@ -4,10 +4,10 @@ function love.conf(t)
     t.console = true
 
     t.window.title = "Marching squares"
-    t.window.width = 550
-    -- t.window.width = 1020
-    t.window.height = 550
-    -- t.window.height = 800
+    t.window.width = 600
+    -- t.window.width = 840
+    t.window.height = 600
+    -- t.window.height = 600
     -- t.window.x = nil
     -- t.window.y = nil 
     t.window.resizable = true

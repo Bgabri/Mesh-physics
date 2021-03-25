@@ -17,26 +17,26 @@ function pointOnSegment(px, py, x1, y1, x2, y2)
   return x1 + u*dx, y1 + u*dy
 end
 
-function pointOnBox(px, py, x, y, hw, hh)
-  local qx, qy = px - x, py - y
-  if qx > hw then
-    qx = hw
-  elseif qx < -hw then
-    qx = -hw
+function pointOnCircle(px, py, cx, cy, r)
+  local dx, dy = px - cx, py - cy
+  local d = math.sqrt(dx*dx + dy*dy)
+  if d <= r then
+    return px, py
   end
-  if qy > hh then
-    qy = hh
-  elseif qy < -hh then
-    qy = -hh
-  end
-  return qx + x, qy + y
+  return dx/d*r + cx, dy/d*r + cy
 end
 
+function pointOnRect(px, py, l, t, w, h)
+  px = math.max(px, l)
+  px = math.min(px, l + w)
+  py = math.max(py, t)
+  py = math.min(py, t + h)
+  return px, py
+end
 
 local function dot(ax, ay, bx, by)
   return ax*bx + ay*by
 end
-
 function pointOnTriangle(px, py, ax, ay, bx, by, cx, cy)
   local abx, aby = bx - ax, by - ay
   local acx, acy = cx - ax, cy - ay
@@ -89,11 +89,11 @@ function pointInCircle(px, py, cx, cy, r)
   return dx*dx + dy*dy <= r*r
 end
 
-function pointInBox(px, py, x, y, hw, hh)
-  if math.abs(px - x) > hw then
+function pointInRect(px, py, l, t, w, h)
+  if px < l or px > l + w then
     return false
   end
-  if math.abs(py - y) > hh then
+  if py < t or py > t + h then
     return false
   end
   return true
@@ -221,6 +221,7 @@ function segmentVsAABB(x1, y1, x2, y2, l, t, r, b)
   return true, qx, qy, x1 + nx*tmax, y1 + ny*tmax
 end
 
+
 function circleVsCircle(cx, cy, r, cx2, cy2, r2)
   return pointInCircle(cx, cy, cx2, cy2, r + r2)
 end
@@ -231,17 +232,22 @@ function circleVsCircle2(cx, cy, r, cx2, cy2, r2) -- expanded version which also
   return dx*dx + dy*dy <= sradii*sradii
 end
 
-
-function circleVsBox(cx, cy, cr, x, y, hw, hh)
-  local qx, qy = pointOnBox(cx, cy, x, y, hw, hh)
+function circleVsRect(cx, cy, cr, x, y, w, h)
+  local qx, qy = pointOnRect(cx, cy, x, y, w, h)
   return pointInCircle(qx, qy, cx, cy, cr)
 end
 
-function circleVsBox(cx, cy, cr, x, y, hw, hh)-- expanded version which also finds the point of the intersection
-  local dx = math.abs(x - cx)
-  local dy = math.abs(y - cy)
-  dx = math.max(dx - hw, 0)
-  dy = math.max(dy - hh, 0)
+local function clamp(n, min, max)
+  if n < min then
+    n = min
+  elseif n > max then
+    n = max
+  end
+  return n
+end
+function circleVsRect(cx, cy, cr, l, t, w, h)
+  local dx = clamp(cx, l, l + w) - cx
+  local dy = clamp(cy, t, t + h) - cy
   return dx*dx + dy*dy <= cr*cr
 end
 
@@ -251,11 +257,11 @@ function triangleVsCircle(ax, ay, bx, by, cx, cy, sx, sy, r)
 end
 
 
-function boxVsBox(x, y, hw, hh, x2, y2, hw2, hh2)
-  if math.abs(x - x2) > hw + hw2 then
+function rectVsRect(l, t, w, h, l2, t2, w2, h2)
+  if l > l2 + w2 or l2 > l + w then
     return false
   end
-  if math.abs(y - y2) > hh + hh2 then
+  if t > t2 + h2 or t2 > t + h then
     return false
   end
   return true
@@ -289,7 +295,3 @@ function triangleVsTriangle(x1,y1,x2,y2,x3,y3, ax,ay,bx,by,cx,cy)
   return not (cross2(x1,y1,x2,y2,x3,y3, ax,ay,bx,by,cx,cy) or
     cross2(ax,ay,bx,by,cx,cy, x1,y1,x2,y2,x3,y3))
 end
-
-
-
-

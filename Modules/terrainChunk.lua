@@ -54,7 +54,7 @@ function TerrainChunk:initialiseThread(points)
 	self.generate:start(self.id, self.x, self.y, self.textureHeight, self.textureWidth, self.scale, self.terrainPoints)
 end
 
-function TerrainChunk:getThreadValue()
+function TerrainChunk:update()
 	while love.thread.getChannel("vertices"..self.id):getCount() > 0 do
 		local vertixTable = love.thread.getChannel("vertices"..self.id):pop()
 		if not (vertixTable == nil) then
@@ -70,9 +70,11 @@ function TerrainChunk:getThreadValue()
 			self.mesh:setVertices(self.meshVertices, 1, self.workingLength)
 			self.mesh:setDrawRange(1, self.workingLength)
 		end
+
 		local error = self.generate:getError()
 		assert(not error, error)
-		
+		self.generate = nil
+
 		return true
 	end
 	return false
@@ -150,3 +152,33 @@ function TerrainChunk:drawPoints()
 		end
 	end
 end
+
+
+function TerrainChunk:resolveColision(x, y, r)
+	local xMin, yMin = 1000, 1000
+	for i = 1, #self.meshVertices/3 do
+		vertix1 = self.meshVertices[i*3-2]
+		vertix2 = self.meshVertices[i*3-1]
+		vertix3 = self.meshVertices[i*3]
+		-- local xAvg = (vertix1[1] + vertix2[1] + vertix3[1])/3
+		-- local yAvg = (vertix1[2] + vertix2[2] + vertix3[2])/3
+		-- if circleVsCircle(x, y, r, xAvg, yAvg, self.scale*0.5) then
+			-- if triangleVsCircle(vertix1[1], vertix1[2], vertix2[1], vertix2[2], vertix3[1], vertix3[2], x, y, r) then
+				qx, qy = pointOnTriangle(x, y, vertix1[1], vertix1[2], vertix2[1], vertix2[2], vertix3[1], vertix3[2])
+				if((x-qx)^2 + (y-qy)^2 < (x-xMin)^2 + (y-yMin)^2) then
+					xMin, yMin = qx, qy
+				end
+			-- end
+		-- end
+	end
+
+	if (xMin == 1000 and yMin == 1000) then
+		return false, false
+	end
+	return xMin, yMin
+	-- return false
+end
+
+
+
+

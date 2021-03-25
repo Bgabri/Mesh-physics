@@ -103,4 +103,3 @@ end
 function FluidAutomata:drawPoints()
 	self.fluidChunk:drawPoints()
 end
-

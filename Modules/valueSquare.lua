@@ -85,7 +85,6 @@ function ValueSquare:intraprolated(middleValue)
 							local vertex3 = self.valueVertices[k]
 							
 							if (vertex3.value >= 0.5) then
-
 								if (i + j + k == 9) then
 									triangleVertices[6] = {vertex3.x, vertex3.y}
 								elseif (i + j + k == 7) then
@@ -138,7 +137,7 @@ function isoValueIntraprolation(valueVertex1, valueVertex2, valueVertex3, valueV
 	end
 	if (intraY4 < valueVertex1.y or intraY4 > valueVertex4.y) then
 		intraY4 = 1/0
-	end -- check can be avoided??
+	end
 	
 	return {intraX1, valueVertex1.y, valueVertex2.x, intraY2, intraX3, valueVertex3.y, valueVertex4.x, intraY4}
 end

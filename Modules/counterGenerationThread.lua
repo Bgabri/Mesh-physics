@@ -3,6 +3,7 @@ Object = require "Libraries/classic/classic"
 require "Modules/valueSquare"
 local id, x, y, textureHeight, textureWidth, scale, terrainPoints = ... 
 --]]
+
 local function addVertices(vertices)
 	for k,v in ipairs(vertices) do
 		---[[ output
