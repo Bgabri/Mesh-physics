@@ -3,7 +3,7 @@
 ### controls
 - ``left_click``: add terrain
 - ``r``: generate new terrain
-- ``wasd/ arrow_keys``: pan around
+- ``wasd/ arrow_keys``: control player
 
 ### notes
 libraries used:
